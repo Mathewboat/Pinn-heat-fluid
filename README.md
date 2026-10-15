@@ -262,13 +262,16 @@ FDM baseline, as expected for central difference discretization:
 
 | Grid Points (nx) | L2 Relative Error | L∞ Error |
 |-----------------|-------------------|----------|
-| 20 | *to be filled* | *to be filled* |
-| 50 | *to be filled* | *to be filled* |
-| 100 | *to be filled* | *to be filled* |
-| 200 | *to be filled* | *to be filled* |
-| 500 | *to be filled* | *to be filled* |
+| 20 | 2.3354e-02 | 4.4910e-04 |
+| 50 | 3.5336e-03 | 6.8150e-05 |
+| 100 | 4.6379e-04 | 8.9483e-06 |
+| 200 | 2.1446e-04 | 4.1383e-06 |
+| 500 | 3.4110e-05 | 6.5820e-07 |
 
 **FDM Solution — Temperature Field T(x,t):**
+
+**FDM Solution — Temperature Field T(x,t):**
+![FDM Heatmap](01_heat_1d/results/fdm_heatmap.png)
 
 *(Figure: fdm_heatmap.png — to be embedded upon completion)*
 
