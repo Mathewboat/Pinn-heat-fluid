@@ -268,12 +268,10 @@ FDM baseline, as expected for central difference discretization:
 | 200 | 2.1446e-04 | 4.1383e-06 |
 | 500 | 3.4110e-05 | 6.5820e-07 |
 
-**FDM Solution — Temperature Field T(x,t):**
 
 **FDM Solution — Temperature Field T(x,t):**
 ![FDM Heatmap](01_heat_1d/results/fdm_heatmap.png)
 
-*(Figure: fdm_heatmap.png — to be embedded upon completion)*
 
 **Key observation:** The FDM solution requires nx=100 spatial grid points
 and nt=10,000 time steps (1,000,000 total grid evaluations) to achieve
