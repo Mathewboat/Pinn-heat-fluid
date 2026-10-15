@@ -122,6 +122,9 @@ Initial condition:    u(x, 0)  = −sin(πx)
 Viscosity:            ν = 0.01/π  (shock-forming regime)
 
 Reference solution:   Raissi et al. (2019) spectral dataset
+**Reference dataset:** `burgers_shock.mat` — high-resolution spectral solution
+from Raissi et al. (2019), obtained from the
+[original paper repository](https://github.com/maziarraissi/PINNs/blob/master/appendix/Data/).
 ```
 
 This low-viscosity regime (ν = 0.01/π) generates near-discontinuous shock
