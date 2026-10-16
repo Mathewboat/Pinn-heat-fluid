@@ -107,7 +107,9 @@ with α* = 0.4. Physical results for carbon steel (α = 1.17×10⁻⁵ m²/s)
 are recovered by restoring dimensions:
 
 x_physical = x* × L          (e.g. L = 0.1 m)
+
 t_physical = t* × L²/α_real  (e.g. ~856 seconds for L=0.1m)
+
 T_physical = T* × T_ref      (e.g. T_ref = 500°C)
 
 ### 2. Steady-State Heat Conduction (2D)
