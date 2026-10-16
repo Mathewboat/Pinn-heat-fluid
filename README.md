@@ -278,14 +278,73 @@ and nt=10,000 time steps (1,000,000 total grid evaluations) to achieve
 L2 error ~2×10⁻⁵. The PINN data efficiency experiment will show how
 many collocation points are needed to reach equivalent accuracy.
 
-### PINN vs FDM Comparison *(In Progress)*
+### Key Result — Data Efficiency of PINNs vs Classical FDM
 
-| Method | Points Used | L2 Error | L∞ Error | Solve Time |
-|--------|-------------|----------|----------|------------|
-| FDM (nx=100) | 1,000,000 | — | — | — |
-| PINN | 2,500 | — | — | — |
-| PINN | 500 | — | — | — |
-| PINN | 100 | — | — | — |
+> **Research question:** How many physics-constrained training points does a
+> PINN need to match the accuracy of a classical finite difference solver
+> that uses orders of magnitude more grid points?
+
+| Method | Points Used | L2 Relative Error | L∞ Error | Status |
+|--------|-------------|-------------------|----------|--------|
+| FDM (nx=20) | ~20,000 | — | — | ⏳ In Progress |
+| FDM (nx=50) | ~125,000 | — | — | ⏳ In Progress |
+| FDM (nx=100) | ~1,000,000 | — | — | ⏳ In Progress |
+| FDM (nx=200) | ~4,000,000 | — | — | ⏳ In Progress |
+| PINN (N=100 pts) | 100 | — | — | ⏳ In Progress |
+| PINN (N=500 pts) | 500 | — | — | ⏳ In Progress |
+| PINN (N=2,500 pts) | 2,500 | — | — | ⏳ In Progress |
+| PINN (N=5,000 pts) | 5,000 | — | — | ⏳ In Progress |
+
+*Target: Demonstrate that a PINN with ~2,500 collocation points achieves
+comparable L2 accuracy to FDM with 1,000,000+ grid evaluations —
+a potential 400× reduction in required training points.*
+
+---
+
+### Results by Problem
+
+#### Problem 1 — 1D Transient Heat Conduction
+
+| Metric | FDM Baseline (nx=100) | PINN | Improvement |
+|--------|-----------------------|------|-------------|
+| L2 Relative Error | ⏳ | ⏳ | ⏳ |
+| L∞ Error | ⏳ | ⏳ | ⏳ |
+| RMSE | ⏳ | ⏳ | ⏳ |
+| Points Required | ~1,000,000 | ⏳ | ⏳ |
+| Solve Time (CPU) | ⏳ | ⏳ | ⏳ |
+
+#### Problem 2 — 2D Steady-State Heat Conduction
+
+| Metric | FDM Baseline | PINN | Improvement |
+|--------|-----------------------|------|-------------|
+| L2 Relative Error | ⏳ | ⏳ | ⏳ |
+| L∞ Error | ⏳ | ⏳ | ⏳ |
+| Points Required | ⏳ | ⏳ | ⏳ |
+
+#### Problem 3 — Burgers' Equation (Viscous Flow)
+
+| Metric | Spectral Reference | PINN | Notes |
+|--------|--------------------|------|-------|
+| L2 Relative Error | — (reference) | ⏳ | Raissi 2019 reports ~10⁻³ |
+| L∞ Error | — (reference) | ⏳ | — |
+| Shock region error | — | ⏳ | Key challenge region |
+
+---
+
+### Architecture Study *(In Progress)*
+
+Which neural network configuration best solves physics-constrained PDEs?
+
+| Architecture | Activation | Parameters | L2 Error | Training Time |
+|-------------|------------|------------|----------|---------------|
+| [2, 20×3, 1] | tanh | ~1,300 | ⏳ | ⏳ |
+| [2, 64×4, 1] | tanh | ~16,500 | ⏳ | ⏳ |
+| [2, 64×4, 1] | sin (SIREN) | ~16,500 | ⏳ | ⏳ |
+| [2, 64×4, 1] | swish | ~16,500 | ⏳ | ⏳ |
+| [2, 64×6, 1] | tanh | ~24,700 | ⏳ | ⏳ |
+
+*Hypothesis: tanh and sin activations will outperform ReLU because
+PDE residual computation requires smooth, non-zero second derivatives.*
 
 **Headline result (expected):** PINN achieves comparable accuracy to FDM
 with ~400× fewer points, demonstrating the data efficiency advantage of
