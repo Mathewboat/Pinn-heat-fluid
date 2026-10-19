@@ -1,0 +1,21 @@
+DATA EFFICIENCY STUDY v2 RESULTS
+Mathew Ahenkora Boateng -- KNUST
+3-seed average, proportional BC/IC, adaptive iterations
+
+PINN:
+  N_domain       L2 mean        L2 std     Linf mean
+        50    4.8569e-04    1.3270e-04    5.7263e-04
+       100    4.6946e-04    1.6518e-04    7.2301e-04
+       250    4.4006e-04    6.7992e-05    7.3507e-04
+       500    4.4688e-04    1.1617e-04    9.1106e-04
+      1000    4.0369e-04    4.4623e-05    6.3672e-04
+      2500    2.9696e-04    5.9315e-05    6.2365e-04
+
+FDM:
+        nx       Total pts            L2          Linf
+        10             820    1.0142e-01    1.9273e-03
+        20           7,240    2.3354e-02    4.4910e-04
+        50         120,100    3.5336e-03    6.8150e-05
+       100         980,100    4.6379e-04    8.9483e-06
+       200       7,920,400    2.1446e-04    4.1383e-06
+       500     124,501,000    3.4110e-05    6.5820e-07
