@@ -1,0 +1,23 @@
+2D HEAT EQUATION — PINN v2 RESULTS
+Mathew Ahenkora Boateng — KNUST
+Fixes: LR decay, 30k Adam, 6 hidden layers
+
+Architecture      : [2, 64, 64, 64, 64, 64, 64, 1]
+Parameters        : 21,057
+Adam iterations   : 30,000
+LR schedule       : ExponentialDecay 1e-3->~2e-4
+
+L2 Relative Error : 2.3312e-03
+L-inf Error       : 2.6716e-04
+RMSE              : 5.8756e-05
+R2 Score          : 0.999984
+
+Training points   : 2900
+FDM points        : 10000
+FDM L2 error      : 1.9493e-02
+PINN vs FDM       : 8.4x more accurate
+Total train time  : 2781.1s
+
+v1 L2 error       : 3.8018e-03
+v2 L2 error       : 2.3312e-03
+Improvement       : 38.7%
