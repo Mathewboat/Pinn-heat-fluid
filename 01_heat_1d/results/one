@@ -1,1 +1,93 @@
+=======================================================
+  1D Heat Equation — Finite Difference Method (FDM)
+=======================================================
+  α (thermal diffusivity) = 0.4
+  Grid points (nx)        = 100
+  Time steps  (nt)        = 10000
+  dx                      = 0.01010
+  dt                      = 0.000100
+  Stability parameter r   = 0.3920  (must be < 0.5)
+  Stability check         ✓ STABLE
 
+  Running FDM time marching...
+  Time marching complete. Stored 101 snapshots.
+
+───────────────────────────────────────────────────────
+  ERROR METRICS at t = 1.0
+───────────────────────────────────────────────────────
+  L2 Relative Error  : 4.479682e-04
+  L∞ Error           : 8.643042e-06
+  RMSE               : 6.081684e-06
+───────────────────────────────────────────────────────
+
+  ← Save these numbers. Your PINN must beat or match them.
+
+  Saved: results/fdm_time_slices.png
+  Saved: results/fdm_heatmap.png
+  Saved: results/fdm_final_comparison.png
+
+───────────────────────────────────────────────────────
+  GRID REFINEMENT STUDY
+───────────────────────────────────────────────────────
+      nx        nt      L2 Error      L∞ Error
+  ---------------------------------------------
+      20       362    2.3354e-02    4.4910e-04
+      50      2402    3.5336e-03    6.8150e-05
+     100      9801    4.6379e-04    8.9483e-06
+     200     39602    2.1446e-04    4.1383e-06
+     500    249002    3.4110e-05    6.5820e-07
+
+  Saved: results/fdm_refinement.png
+
+=======================================================
+  FDM BASELINE COMPLETE
+  These are your benchmark numbers for the PINN comparison:
+  nx=100  →  L2 = 4.6379e-04,  L∞ = 8.9483e-06
+=======================================================
+PS C:\kwame\Programming stuff\github project\github project\Pinn-heat-fluid>& C:\Users\boama\AppData\Local\Programs\Python\Python311\python.exe "c:/kwame/Programming stuff/github project/github project/Pinn-heat-fluid/01_heat_1d/heat1d_fdm_baseline.py"aaaqqqqqjjkkk
+=======================================================
+  1D Heat Equation — Finite Difference Method (FDM)
+=======================================================
+  α (thermal diffusivity) = 0.4
+  Grid points (nx)        = 100
+  Time steps  (nt)        = 10000
+  dx                      = 0.01010
+  dt                      = 0.000100
+  Stability parameter r   = 0.3920  (must be < 0.5)
+  Stability check         ✓ STABLE
+
+  Running FDM time marching...
+  Time marching complete. Stored 101 snapshots.
+
+───────────────────────────────────────────────────────
+  ERROR METRICS at t = 1.0
+───────────────────────────────────────────────────────
+  L2 Relative Error  : 4.479682e-04
+  L∞ Error           : 8.643042e-06
+  RMSE               : 6.081684e-06
+───────────────────────────────────────────────────────
+
+  ← Save these numbers. Your PINN must beat or match them.
+
+  Saved: results/fdm_time_slices.png
+  Saved: results/fdm_heatmap.png
+  Saved: results/fdm_final_comparison.png
+
+───────────────────────────────────────────────────────
+  GRID REFINEMENT STUDY
+───────────────────────────────────────────────────────
+      nx        nt      L2 Error      L∞ Error
+  ---------------------------------------------
+      20       362    2.3354e-02    4.4910e-04
+      50      2402    3.5336e-03    6.8150e-05
+     100      9801    4.6379e-04    8.9483e-06
+     200     39602    2.1446e-04    4.1383e-06
+     500    249002    3.4110e-05    6.5820e-07
+
+  Saved: results/fdm_refinement.png
+
+=======================================================
+  FDM BASELINE COMPLETE
+  These are your benchmark numbers for the PINN comparison:
+  nx=100  →  L2 = 4.6379e-04,  L∞ = 8.9483e-06
+=======================================================
