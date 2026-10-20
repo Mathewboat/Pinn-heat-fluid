@@ -268,23 +268,24 @@ and exceed with significantly fewer computational points.
 **Grid Refinement Study** — confirms second-order spatial accuracy of the
 FDM baseline, as expected for central difference discretization:
 
-| Grid Points (nx) | L2 Relative Error | L∞ Error |
-|-----------------|-------------------|----------|
-| 20 | 2.3354e-02 | 4.4910e-04 |
-| 50 | 3.5336e-03 | 6.8150e-05 |
-| 100 | 4.6379e-04 | 8.9483e-06 |
-| 200 | 2.1446e-04 | 4.1383e-06 |
-| 500 | 3.4110e-05 | 6.5820e-07 |
+**Grid refinement study** (explicit FDM, error over all nodes and time steps):
 
+| nx | Space-time points | L2 relative error |
+|----|-------------------|-------------------|
+| 20 | 7,260 | 2.25×10⁻³ |
+| 50 | 120,150 | 3.37×10⁻⁴ |
+| 100 | 980,200 | 8.25×10⁻⁵ |
+| 200 | 7,920,400 | 2.04×10⁻⁵ |
+| 500 | 124,501,500 | 3.25×10⁻⁶ |
+
+Error falls about 4× per doubling of nx (observed order ≈ 2), as expected
+for central differences.
 
 **FDM Solution — Temperature Field T(x,t):**
 ![FDM Heatmap](01_heat_1d/results/fdm_heatmap.png)
 
 
-**Key observation:** The FDM solution requires nx=100 spatial grid points
-and nt=10,000 time steps (1,000,000 total grid evaluations) to achieve
-L2 error ~2×10⁻⁵. The PINN data efficiency experiment will show how
-many collocation points are needed to reach equivalent accuracy.
+
 
 ### Key Result — Data Efficiency of PINNs vs Classical FDM
 
@@ -294,63 +295,63 @@ many collocation points are needed to reach equivalent accuracy.
 
 ### Key Result — Data Efficiency of PINNs vs Classical FDM
 
-| Method | Points used | L2 error | Monotonic |
-|--------|-------------|----------|-----------|
-| PINN N=50 | 250 | 4.86×10⁻⁴ | — |
-| PINN N=100 | 300 | 4.69×10⁻⁴ | ✓ |
-| PINN N=250 | 350 | 4.40×10⁻⁴ | ✓ |
-| PINN N=500 | 700 | 4.47×10⁻⁴ | ~ |
-| PINN N=1000 | 1,400 | 4.04×10⁻⁴ | ✓ |
-| **PINN N=2500** | **2,700** | **2.97×10⁻⁴** | **✓ best** |
-| FDM nx=100 | 980,100 | 4.64×10⁻⁴ | ✓ |
-| FDM nx=200 ← matched | 7,920,400 | 2.14×10⁻⁴ | ✓ |
+### Problem 1: 1D Transient Heat Conduction
 
-**Key result:** PINN with 2,700 training points achieves L2=2.97×10⁻⁴,
-matching FDM accuracy that requires 7,920,400 grid evaluations —
-a **2,933× reduction** in computational points.
-Results averaged over 3 random seeds (42, 123, 7).
+| Method | Space-time points | L2 relative error |
+|--------|-------------------|-------------------|
+| PINN, N=50 (3-seed mean) | 150 | 4.86×10⁻⁴ |
+| PINN, N=100 | 200 | 4.69×10⁻⁴ |
+| PINN, N=250 | 350 | 4.40×10⁻⁴ |
+| PINN, N=500 | 700 | 4.47×10⁻⁴ |
+| PINN, N=1000 | 1,400 | 4.04×10⁻⁴ |
+| **PINN, N=2500** | **3,500** | **2.97×10⁻⁴** |
+| FDM, nx=20 | 7,260 | 2.25×10⁻³ |
+| **FDM, nx=50** | **120,150** | **3.37×10⁻⁴** |
+| FDM, nx=100 | 980,200 | 8.25×10⁻⁵ |
+| FDM, nx=200 | 7,920,400 | 2.04×10⁻⁵ |
 
-*Target: Demonstrate that a PINN with ~2,500 collocation points achieves
-comparable L2 accuracy to FDM with 1,000,000+ grid evaluations —
-a potential 400× reduction in required training points.*
+The PINN (N=2500) reaches the accuracy of a 120,150-point explicit FDM grid
+with about 34× fewer points. Differences among PINN runs from N=50 to N=1000
+are within one standard deviation across seeds. FDM is far cheaper in
+wall-clock time here (about 0.12 s versus about 17 min of PINN training).
 
----
+
+
 
 ### Results by Problem
 
-#### Problem 1 — 1D Transient Heat Conduction
+Single run (seed 42, 4×64 tanh, 20k Adam + L-BFGS, 2,900 points):
+L2 = 1.55×10⁻⁴, L∞ = 3.53×10⁻⁴, 714 s on CPU.
 
-| Metric | FDM Baseline (nx=100) | PINN | Improvement |
-|--------|-----------------------|------|-------------|
-| L2 Relative Error | ~2.0×10⁻⁵ | 1.55×10⁻⁴ | Same order of magnitude |
-| L∞ Error | ~8.0×10⁻⁶ | 3.53×10⁻⁴ | Comparable |
-| R² Score | ~0.999999 | 1.000000 | Equal |
-| Points Required | ~1,000,000 | 2,900 | 344× fewer |
-| Train time (CPU) | ~2s | 714s | FDM faster* |
 FDM is faster for simple 1D cases. PINN advantage emerges in complex geometry, inverse problems, and multi-physics settings.
 
 #### Problem 2 — 2D Steady-State Heat Conduction
 
-"The 2D steady-state heat equation (Poisson problem) was solved using an expanded PINN architecture of six hidden layers (21,057 parameters) with exponential learning rate decay. Despite persistent Adam oscillations characteristic of the non-convex 2D Poisson loss landscape, L-BFGS fine-tuning converged the solution to L2=2.33×10⁻³ and R²=0.999984 — 8.4× more accurate than the FDM baseline (L2=1.95×10⁻²) using 3× fewer computational points. The remaining Adam oscillation motivates further investigation of adaptive loss weighting (Wang et al., 2022) and self-adaptive collocation strategies (Wu et al., 2023) as directions for future work."
+### Problem 2: 2D Steady-State Heat Conduction
+
+| Method | Points | L2 relative error | Time |
+|--------|--------|-------------------|------|
+| FDM 20×20 (direct solve) | 400 | 2.28×10⁻³ | 0.01 s |
+| FDM 50×50 | 2,500 | 3.43×10⁻⁴ | 0.02 s |
+| FDM 100×100 | 10,000 | 8.39×10⁻⁵ | 0.08 s |
+| PINN v1 (4×64, 20k Adam) | 2,900 | 3.80×10⁻³ | ~22 min |
+| PINN v2 (6×64, 30k Adam, LR decay) | 2,900 | 2.33×10⁻³ | ~46 min |
+
+For this smooth problem on a rectangle, classical FDM is both more accurate
+and orders of magnitude cheaper. PINNs are not competitive here; their
+potential advantages are in irregular geometry and inverse problems (see Roadmap).
+The v1→v2 change is a single-seed result with three changes made at once.
 
 
 
 
-
-#### Problem 2 — 2D Steady-State Heat Conduction
-
-| Metric | FDM (nx=100) | PINN v1 | PINN v2 | Best |
-|--------|-------------|---------|---------|------|
-| L2 Relative Error | 1.95×10⁻² | 3.80×10⁻³ | 2.33×10⁻³ | PINN v2 |
-| L-inf Error | 9.88×10⁻⁴ | — | 2.67×10⁻⁴ | PINN v2 |
-| R² Score | N/A | 0.999959 | 0.999984 | PINN v2 |
-| Points required | 10,000 | 2,900 | 2,900 | PINN (3× fewer) |
-
-PINN v2 is **8.4× more accurate** than FDM using **3× fewer points**.
-Improvement from v1→v2: **38.7%** via LR decay + deeper network.
 
 Note: "For simple rectangular domains, FDM remains computationally faster. The PINN advantage becomes decisive in irregular geometries, inverse problems, and multi-physics settings where FDM requires complete remeshing. No  GPU was used in any of the code executions"
 
+## Corrections log
+- An early 2D FDM baseline used an under-converged Gauss-Seidel iteration and
+  an early 1D comparison scored FDM at the final time only. Both were replaced by
+  `fdm_baselines_corrected.py` (direct sparse solve; whole-domain space-time metric).
 
 
 
@@ -358,10 +359,15 @@ Note: "For simple rectangular domains, FDM remains computationally faster. The P
 
 | Metric | Spectral Reference | PINN | Notes |
 |--------|--------------------|------|-------|
-| L2 Relative Error | — (reference) | ⏳ | Raissi 2019 reports ~10⁻³ |
+| L2 Relative Error | — (reference) | ⏳ | Raissi 2019 reports  3.93×10⁻⁴ |
 | L∞ Error | — (reference) | ⏳ | — |
 | Shock region error | — | ⏳ | Key challenge region |
 
+
+## Corrections log
+- An early 2D FDM baseline used an under-converged Gauss-Seidel iteration and
+  an early 1D comparison scored FDM at the final time only. Both were replaced by
+  `fdm_baselines_corrected.py` (direct sparse solve; whole-domain space-time metric).
 ---
 
 ### Architecture Study *(In Progress)*
@@ -379,9 +385,7 @@ Which neural network configuration best solves physics-constrained PDEs?
 *Hypothesis: tanh and sin activations will outperform ReLU because
 PDE residual computation requires smooth, non-zero second derivatives.*
 
-**Headline result (expected):** PINN achieves comparable accuracy to FDM
-with ~400× fewer points, demonstrating the data efficiency advantage of
-physics-constrained learning.
+.
 
 ---
 
