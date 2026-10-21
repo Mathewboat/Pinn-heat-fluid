@@ -549,14 +549,14 @@ frameworks in structural health monitoring and process control.
 ## Author
 
 **Mathew Ahenkora Boateng**
-Undergraduate, Mechanical Engineering
+Prospective Graduate Applicant, Mechanical Engineering
 Kwame Nkrumah University of Science and Technology (KNUST)
 
 - 📧 mkwameboateng@gmail.com
 - 🔗 [linkedin.com/in/mathew-ahenkora-boateng-7222011b6](https://www.linkedin.com/in/mathew-ahenkora-boateng-7222011b6)
 - 🐙 [github.com/Mathewboat](https://github.com/Mathewboat)
 
-*Applying for PhD programs in Mechanical Engineering (Fall 2026 intake),
+*Applying for PhD programs in Mechanical Engineering (Fall 2027 intake),
 with research interests in computational mechanics, scientific machine learning,
 and physics-informed methods for thermal and fluid systems.*
 
