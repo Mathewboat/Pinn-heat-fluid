@@ -7,8 +7,9 @@
 [![Status](https://img.shields.io/badge/Status-In%20Progress-blueviolet)]()
 
 > **A deep learning framework that embeds thermodynamic and fluid governing equations
-> directly into the neural network training process — eliminating the need for
-> dense computational meshes while remaining faithful to the underlying physics.**
+> directly into the neural network training process — complementing
+
+> dense computational meshes while remaining approximately faithful to the underlying physics.**
 
 ---
 
@@ -137,7 +138,7 @@ from Raissi et al. (2019), obtained from the
 ```
 
 This low-viscosity regime (ν = 0.01/π) generates near-discontinuous shock
-structures — one of the most challenging scenarios for both classical and
+structures — one of the most challenging scenarios for 
 data-driven solvers.
 
 ---
@@ -159,9 +160,6 @@ The choice of **tanh** activation is deliberate: ReLU and its variants produce
 zero second derivatives almost everywhere, making the PDE residual computation
 meaningless. Tanh provides the smooth, infinitely differentiable activation
 that PDE-constrained training requires.
-
-### Loss Function
-
 
 ### Loss Function
 
@@ -715,8 +713,8 @@ C:pinn-heat-fluid/
 
 ### FDM Baseline — 1D Heat Equation
 
-The classical FDM solver establishes the benchmark this project aims to match
-and exceed with significantly fewer computational points.
+The classical FDM solver establishes the benchmark this project aims to compare
+with significantly fewer computational points on only CPU performance.
 
 **Grid Refinement Study** — confirms second-order spatial accuracy of the
 FDM baseline, as expected for central difference discretization:
@@ -763,9 +761,7 @@ for central differences.
 | FDM, nx=100 | 980,200 | 8.25×10⁻⁵ |
 | FDM, nx=200 | 7,920,400 | 2.04×10⁻⁵ |
 
-
-The PINN (N=2500) reaches the accuracy of a 120,150-point explicit FDM grid
-with about 34× fewer points. Differences among PINN runs from N=50 to N=1000
+ Differences among PINN runs from N=50 to N=1000
 are within one standard deviation across seeds. FDM is far cheaper in
 wall-clock time here (about 0.12 s versus about 17 min of PINN training).
 
@@ -776,10 +772,10 @@ wall-clock time here (about 0.12 s versus about 17 min of PINN training).
 
 ### Results by Problem
 
-Single run (seed 42, 4×64 tanh, 20k Adam + L-BFGS, 2,900 points):
+Single run (unseeded single run, 4×64 tanh, 20k Adam + L-BFGS, 2,900 points):
 L2 = 1.55×10⁻⁴, L∞ = 3.53×10⁻⁴, 714 s on CPU.
 
-FDM is faster for simple 1D cases. PINN advantage emerges in complex geometry, inverse problems, and multi-physics settings.
+FDM is faster for simple 1D cases. 
 
 #### Problem 2 — 2D Steady-State Heat Conduction
 
@@ -791,7 +787,7 @@ FDM is faster for simple 1D cases. PINN advantage emerges in complex geometry, i
 | FDM 50×50 | 2,500 | 3.43×10⁻⁴ | 0.02 s |
 | FDM 100×100 | 10,000 | 8.39×10⁻⁵ | 0.08 s |
 | PINN v1 ( 20k Adam) | 2,900 | 3.80×10⁻³ | ~22 min |
-| PINN v2 (6×64, 30k Adam, LR decay) | 2,900 | 2.33×10⁻³ | ~46 min |
+| PINN v2 (6×64, 15k-30k Adam, LR decay) | 2,900 | 2.33×10⁻³ | ~46 min |
 
 For this smooth problem on a rectangle, classical FDM is both more accurate
 and orders of magnitude cheaper. PINNs are not competitive here; their
@@ -851,7 +847,7 @@ PDE residual computation requires smooth, non-zero second derivatives.*
 ```bash
 # 1. Clone the repository
 git clone https://github.com/Mathewboat/Pinn-heat-fluid.git
-cd cd Pinn-heat-fluid
+cd Pinn-heat-fluid
 
 # 2. Create and activate virtual environment
 python -m venv pinn_env
@@ -873,8 +869,8 @@ export DDE_BACKEND=tensorflow
 
 **requirements.txt:**
 ```
-tensorflow>=2.21
-deepxde>=1.15
+tensorflow>=2.15
+deepxde>=1.10
 numpy>=1.24
 scipy>=1.11
 matplotlib>=3.7
@@ -885,9 +881,13 @@ imageio>=2.31
 tqdm>=4.65
 ```
 
-**Python version:** 3.8–3.11 required (TensorFlow constraint)
+**Python version:** 3.11 required (TensorFlow constraint)
 
 ---
+
+**Limitation:**
+
+**Reproducibility:**
 
 ## Usage
 
@@ -939,7 +939,7 @@ real-time thermal field reconstruction from sparse thermocouple measurements
 Laser powder bed fusion involves rapid, localized heat input creating steep
 thermal gradients. Classical FEM solvers require millions of elements and
 hours of compute time. PINNs offer a path to faster thermal history prediction
-for microstructure control.
+for microstructure control.(untested)
 
 **Turbomachinery**
 Burgers' equation is a canonical model for shock waves in compressible flow —
@@ -1000,7 +1000,7 @@ frameworks in structural health monitoring and process control.
    *Nature Reviews Physics*, 3(6), 422–440.
    https://doi.org/10.1038/s42254-021-00314-5
 
-6. **Brunton, S. L., Noack, B. R., & Sagaut, P. (2020).**
+6. **Brunton, S. L., Koumoutsakos, B. R., & Sagaut, P. (2020).**
    Machine learning for fluid mechanics.
    *Annual Review of Fluid Mechanics*, 52, 477–508.
    https://doi.org/10.1146/annurev-fluid-010719-060214

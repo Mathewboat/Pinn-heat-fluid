@@ -245,7 +245,7 @@ ax.loglog(nx_list, L2_list,   'o-', lw=2, color='steelblue', label='L2 Error')
 ax.loglog(nx_list, Linf_list, 's-', lw=2, color='crimson',   label='L∞ Error')
 ax.set_xlabel("Number of grid points (nx)", fontsize=12)
 ax.set_ylabel("Error", fontsize=12)
-ax.set_title("FDM Grid Refinement Study\n(slope ≈ 2 confirms 2nd-order accuracy)",
+ax.set_title("FDM Grid Refinement Study\n",
              fontsize=12)
 ax.legend(fontsize=11)
 ax.grid(True, which='both', alpha=0.3)
