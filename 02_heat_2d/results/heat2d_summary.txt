@@ -6,6 +6,4 @@ L-inf Error       : 4.9164e-04
 RMSE              : 9.5818e-05
 R2 Score          : 0.999959
 Training points   : 2900
-FDM points        : 10000
-Point reduction   : 3x
 Total train time  : 1292.3s

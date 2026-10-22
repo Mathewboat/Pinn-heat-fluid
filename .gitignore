@@ -219,3 +219,9 @@ __marimo__/
 
 # Separate local DeepXDE clone
 /deepxde/
+
+*_model*/
+
+*.weights.h5
+
+*_model*/
