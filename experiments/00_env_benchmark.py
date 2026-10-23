@@ -5,9 +5,9 @@
 # for this kind of small PINN, before we commit to a plan.
 #
 # One configuration per process (backend, device and precision are fixed at import time):
-#   python experiments/00_env_benchmark.py --backend pytorch --device gpu --float float32
+#   python experiments/00_env_benchmark.py --backend tensorflow --device gpu --float float32 --xla off
 #
-# Writes <outdir>/bench_<backend>_<device>_<float>.json
+# Writes <outdir>/bench_<backend>_<device>_<float>[_xlaon|_xlaoff].json
 #
 # Problem: u_t = alpha u_xx, x,t in [0,1], alpha=0.4, u(0,t)=u(1,t)=0, u(x,0)=sin(pi x)
 # Exact:   u = exp(-alpha pi^2 t) sin(pi x)
@@ -21,17 +21,20 @@ import time
 from pathlib import Path
 
 ap = argparse.ArgumentParser()
-ap.add_argument("--backend", default="pytorch", choices=["pytorch", "tensorflow", "jax"])
+ap.add_argument("--backend", default="tensorflow", choices=["pytorch", "tensorflow", "jax"])
 ap.add_argument("--device", default="gpu", choices=["gpu", "cpu"])
 ap.add_argument("--float", dest="prec", default="float32", choices=["float32", "float64"])
 ap.add_argument("--iters", type=int, default=2000, help="timed Adam iterations")
 ap.add_argument("--seed", type=int, default=0)
+ap.add_argument("--xla", default="auto", choices=["auto", "on", "off"],
+                help="TensorFlow backend only. auto = DeepXDE default (XLA on when a GPU is used)")
 ap.add_argument("--outdir", default=str(Path(__file__).resolve().parent / "results"))
 args = ap.parse_args()
 
 # These must be set BEFORE deepxde / the backend library is imported.
 os.environ["DDE_BACKEND"] = args.backend
 os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "2")
+os.environ.setdefault("TF_FORCE_GPU_ALLOW_GROWTH", "true")
 if args.device == "cpu":
     os.environ["CUDA_VISIBLE_DEVICES"] = ""
 
@@ -40,6 +43,8 @@ import deepxde as dde
 
 dde.config.set_default_float(args.prec)
 dde.config.set_random_seed(args.seed)
+if args.backend == "tensorflow" and args.xla != "auto":
+    dde.config.enable_xla_jit(args.xla == "on")
 
 # ----------------------------------------------------------------------------
 # Environment report
@@ -55,7 +60,8 @@ def gpu_hardware():
 
 info = dict(python=platform.python_version(), deepxde=dde.__version__,
             backend=dde.backend.backend_name, requested_device=args.device,
-            precision=args.prec, gpu_hardware=gpu_hardware(), cpu_count=os.cpu_count())
+            precision=args.prec, gpu_hardware=gpu_hardware(), cpu_count=os.cpu_count(),
+            xla=args.xla if args.backend == "tensorflow" else "n/a")
 if args.backend == "pytorch":
     import torch
     info["torch"] = torch.__version__
@@ -116,7 +122,8 @@ result = dict(info, timed_iters=args.iters, seconds=round(elapsed, 3),
               l2_relative_error_after_run=l2)
 out = Path(args.outdir)
 out.mkdir(parents=True, exist_ok=True)
-fn = out / f"bench_{args.backend}_{args.device}_{args.prec}.json"
+suffix = f"_xla{args.xla}" if (args.backend == "tensorflow" and args.xla != "auto") else ""
+fn = out / f"bench_{args.backend}_{args.device}_{args.prec}{suffix}.json"
 fn.write_text(json.dumps(result, indent=2), encoding="utf-8")
 print(json.dumps(result, indent=2))
 print(f"\nSaved {fn}")
