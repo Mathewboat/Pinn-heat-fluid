@@ -225,3 +225,7 @@ __marimo__/
 *.weights.h5
 
 *_model*/
+
+deepxde/
+
+deepxde/
