@@ -218,8 +218,9 @@ C:pinn-heat-fluid/
 │   data_validation_test.py
 │   fdm_baselines_corrected.py
 │   LICENSE
+│   make_corrected_figures.py
 │   README.md
-│   requirement.txt
+│   requirements.txt
 │   
 ├───.vscode
 │       settings.json
@@ -230,13 +231,10 @@ C:pinn-heat-fluid/
 │   │   heat1d_pinn.py
 │   │   
 │   └───results
-│           data_efficiency.png
-│           data_efficiency_headline.png
-│           data_efficiency_headline_v2.png
-│           data_efficiency_results.txt
-│           data_efficiency_v2.png
 │           data_efficiency_v2_results.txt
 │           fdm_heatmap.png
+│           fig_efficiency_corrected.png
+│           fig_fdm_refinement_corrected.png
 │           one
 │           pinn_comparison.png
 │           
@@ -245,6 +243,9 @@ C:pinn-heat-fluid/
 │   │   heat2d_pinn.py
 │   │   
 │   └───results
+│           fig_2d_comparison_corrected.png
+│           heat2d_summary.txt
+│           heat2d_summary_v2.txt
 │           two
 │           
 ├───03_burgers
@@ -254,410 +255,13 @@ C:pinn-heat-fluid/
 │   └───results
 │           three
 │           
-├───deepxde
-│   │   .codacy.yml
-│   │   .gitignore
-│   │   .prospector.yaml
-│   │   .readthedocs.yaml
-│   │   CITATION.cff
-│   │   LICENSE
-│   │   pyproject.toml
-│   │   README.md
-│   │   requirements.txt
-│   │   
-│   ├───.github
-│   │   ├───ISSUE_TEMPLATE
-│   │   │       config.yml
-│   │   │       
-│   │   └───workflows
-│   │           build.yml
-│   │           release.yml
-│   │           
-│   ├───deepxde
-│   │   │   callbacks.py
-│   │   │   config.py
-│   │   │   display.py
-│   │   │   losses.py
-│   │   │   metrics.py
-│   │   │   model.py
-│   │   │   real.py
-│   │   │   __init__.py
-│   │   │   
-│   │   ├───backend
-│   │   │   │   backend.py
-│   │   │   │   set_default_backend.py
-│   │   │   │   utils.py
-│   │   │   │   __init__.py
-│   │   │   │   
-│   │   │   ├───jax
-│   │   │   │       tensor.py
-│   │   │   │       __init__.py
-│   │   │   │       
-│   │   │   ├───paddle
-│   │   │   │       tensor.py
-│   │   │   │       __init__.py
-│   │   │   │       
-│   │   │   ├───pytorch
-│   │   │   │       tensor.py
-│   │   │   │       __init__.py
-│   │   │   │       
-│   │   │   ├───tensorflow
-│   │   │   │       tensor.py
-│   │   │   │       __init__.py
-│   │   │   │       
-│   │   │   └───tensorflow_compat_v1
-│   │   │           tensor.py
-│   │   │           __init__.py
-│   │   │           
-│   │   ├───data
-│   │   │       constraint.py
-│   │   │       data.py
-│   │   │       dataset.py
-│   │   │       fpde.py
-│   │   │       function.py
-│   │   │       function_spaces.py
-│   │   │       func_constraint.py
-│   │   │       helper.py
-│   │   │       ide.py
-│   │   │       mf.py
-│   │   │       pde.py
-│   │   │       pde_operator.py
-│   │   │       quadruple.py
-│   │   │       sampler.py
-│   │   │       triple.py
-│   │   │       __init__.py
-│   │   │       
-│   │   ├───geometry
-│   │   │       csg.py
-│   │   │       geometry.py
-│   │   │       geometry_1d.py
-│   │   │       geometry_2d.py
-│   │   │       geometry_3d.py
-│   │   │       geometry_nd.py
-│   │   │       pointcloud.py
-│   │   │       sampler.py
-│   │   │       timedomain.py
-│   │   │       __init__.py
-│   │   │       
-│   │   ├───gradients
-│   │   │       gradients.py
-│   │   │       gradients_forward.py
-│   │   │       gradients_reverse.py
-│   │   │       jacobian.py
-│   │   │       __init__.py
-│   │   │       
-│   │   ├───icbc
-│   │   │       boundary_conditions.py
-│   │   │       initial_conditions.py
-│   │   │       __init__.py
-│   │   │       
-│   │   ├───nn
-│   │   │   │   activations.py
-│   │   │   │   deeponet_strategy.py
-│   │   │   │   initializers.py
-│   │   │   │   regularizers.py
-│   │   │   │   __init__.py
-│   │   │   │   
-│   │   │   ├───jax
-│   │   │   │       fnn.py
-│   │   │   │       nn.py
-│   │   │   │       __init__.py
-│   │   │   │       
-│   │   │   ├───paddle
-│   │   │   │       deeponet.py
-│   │   │   │       fnn.py
-│   │   │   │       mfnn.py
-│   │   │   │       msffn.py
-│   │   │   │       nn.py
-│   │   │   │       __init__.py
-│   │   │   │       
-│   │   │   ├───pytorch
-│   │   │   │       deeponet.py
-│   │   │   │       fnn.py
-│   │   │   │       mionet.py
-│   │   │   │       msffn.py
-│   │   │   │       nn.py
-│   │   │   │       __init__.py
-│   │   │   │       
-│   │   │   ├───tensorflow
-│   │   │   │       deeponet.py
-│   │   │   │       fnn.py
-│   │   │   │       nn.py
-│   │   │   │       __init__.py
-│   │   │   │       
-│   │   │   └───tensorflow_compat_v1
-│   │   │           deeponet.py
-│   │   │           fnn.py
-│   │   │           mfnn.py
-│   │   │           mionet.py
-│   │   │           msffn.py
-│   │   │           nn.py
-│   │   │           resnet.py
-│   │   │           __init__.py
-│   │   │           
-│   │   ├───optimizers
-│   │   │   │   config.py
-│   │   │   │   __init__.py
-│   │   │   │   
-│   │   │   ├───jax
-│   │   │   │       optimizers.py
-│   │   │   │       __init__.py
-│   │   │   │       
-│   │   │   ├───paddle
-│   │   │   │       optimizers.py
-│   │   │   │       __init__.py
-│   │   │   │       
-│   │   │   ├───pytorch
-│   │   │   │       nncg.py
-│   │   │   │       optimizers.py
-│   │   │   │       __init__.py
-│   │   │   │       
-│   │   │   ├───tensorflow
-│   │   │   │       optimizers.py
-│   │   │   │       tfp_optimizer.py
-│   │   │   │       __init__.py
-│   │   │   │       
-│   │   │   └───tensorflow_compat_v1
-│   │   │           optimizers.py
-│   │   │           scipy_optimizer.py
-│   │   │           tfp_optimizer.py
-│   │   │           __init__.py
-│   │   │           
-│   │   ├───utils
-│   │   │       array_ops_compat.py
-│   │   │       external.py
-│   │   │       internal.py
-│   │   │       jax.py
-│   │   │       paddle.py
-│   │   │       pytorch.py
-│   │   │       tensorflow.py
-│   │   │       tensorflow_compat_v1.py
-│   │   │       __init__.py
-│   │   │       
-│   │   └───zcs
-│   │           gradient.py
-│   │           model.py
-│   │           operator.py
-│   │           __init__.py
-│   │           
-│   ├───deepxde_practice
-│   │       test_1.py
-│   │       test_2.py
-│   │       test_tensorflow.py
-│   │       
-│   ├───docker
-│   │       Dockerfile
-│   │       requirements.txt
-│   │       
-│   ├───docs
-│   │   │   conf.py
-│   │   │   index.rst
-│   │   │   make.bat
-│   │   │   Makefile
-│   │   │   requirements.txt
-│   │   │   
-│   │   ├───demos
-│   │   │   │   function.rst
-│   │   │   │   operator.rst
-│   │   │   │   pinn_forward.rst
-│   │   │   │   pinn_inverse.rst
-│   │   │   │   
-│   │   │   ├───function
-│   │   │   │       dataset.rst
-│   │   │   │       func.rst
-│   │   │   │       
-│   │   │   ├───operator
-│   │   │   │       antiderivative_aligned.rst
-│   │   │   │       antiderivative_unaligned.rst
-│   │   │   │       poisson.1d.pideeponet.rst
-│   │   │   │       poisson_1d_pideeponet.png
-│   │   │   │       stokes.png
-│   │   │   │       zcs.rst
-│   │   │   │       
-│   │   │   ├───pinn_forward
-│   │   │   │       allen.cahn.rst
-│   │   │   │       american.put.rst
-│   │   │   │       black_scholes.rst
-│   │   │   │       burgers.rar.rst
-│   │   │   │       burgers.rst
-│   │   │   │       diffusion.1d.exactBC.rst
-│   │   │   │       diffusion.1d.resample.rst
-│   │   │   │       diffusion.1d.rst
-│   │   │   │       diffusion.reaction.rst
-│   │   │   │       elasticity.plate.rst
-│   │   │   │       eulerbeam.rst
-│   │   │   │       heat.resample.rst
-│   │   │   │       heat.rst
-│   │   │   │       helmholtz.2d.dirichlet.hpo.rst
-│   │   │   │       helmholtz.2d.dirichlet.rst
-│   │   │   │       helmholtz.2d.neumann.hole.rst
-│   │   │   │       helmholtz.2d.sound.hard.abc.rst
-│   │   │   │       klein.gordon.rst
-│   │   │   │       Kovasznay.flow.rst
-│   │   │   │       laplace.disk.rst
-│   │   │   │       lotka.volterra.rst
-│   │   │   │       ode.2nd.rst
-│   │   │   │       ode.system.rst
-│   │   │   │       poisson.1d.dirichlet.rst
-│   │   │   │       poisson.1d.dirichletperiodic.rst
-│   │   │   │       poisson.1d.dirichletrobin.rst
-│   │   │   │       poisson.1d.multiscaleFourier.rst
-│   │   │   │       poisson.1d.neumanndirichlet.rst
-│   │   │   │       poisson.1d.pointsetoperator.rst
-│   │   │   │       poisson.dirichlet.1d.exactbc.rst
-│   │   │   │       poisson.Lshape.rst
-│   │   │   │       
-│   │   │   └───pinn_inverse
-│   │   │           diffusion.1d.inverse.rst
-│   │   │           elliptic.inverse.field.rst
-│   │   │           lorenz.inverse.forced.rst
-│   │   │           lorenz.inverse.rst
-│   │   │           reaction.inverse.rst
-│   │   │           
-│   │   ├───images
-│   │   │       backend.png
-│   │   │       dataparallel.png
-│   │   │       deeponet.png
-│   │   │       mfnn.png
-│   │   │       pinn.png
-│   │   │       scaling.png
-│   │   │       
-│   │   ├───modules
-│   │   │       deepxde.backend.jax.rst
-│   │   │       deepxde.backend.paddle.rst
-│   │   │       deepxde.backend.pytorch.rst
-│   │   │       deepxde.backend.rst
-│   │   │       deepxde.backend.tensorflow.rst
-│   │   │       deepxde.backend.tensorflow_compat_v1.rst
-│   │   │       deepxde.data.rst
-│   │   │       deepxde.geometry.rst
-│   │   │       deepxde.gradients.rst
-│   │   │       deepxde.icbc.rst
-│   │   │       deepxde.nn.jax.rst
-│   │   │       deepxde.nn.paddle.rst
-│   │   │       deepxde.nn.pytorch.rst
-│   │   │       deepxde.nn.rst
-│   │   │       deepxde.nn.tensorflow.rst
-│   │   │       deepxde.nn.tensorflow_compat_v1.rst
-│   │   │       deepxde.optimizers.jax.rst
-│   │   │       deepxde.optimizers.paddle.rst
-│   │   │       deepxde.optimizers.pytorch.rst
-│   │   │       deepxde.optimizers.rst
-│   │   │       deepxde.optimizers.tensorflow.rst
-│   │   │       deepxde.optimizers.tensorflow_compat_v1.rst
-│   │   │       deepxde.rst
-│   │   │       deepxde.utils.rst
-│   │   │       
-│   │   └───user
-│   │           cite_deepxde.rst
-│   │           faq.rst
-│   │           installation.rst
-│   │           parallel.rst
-│   │           research.rst
-│   │           team.rst
-│   │           
-│   └───examples
-│       │   Makefile
-│       │   sample_to_test.py
-│       │   
-│       ├───dataset
-│       │       Allen_Cahn.mat
-│       │       Burgers.npz
-│       │       cylinder_nektar_wake.mat
-│       │       dataset.test
-│       │       dataset.train
-│       │       Lorenz.npz
-│       │       mf_hi_test.dat
-│       │       mf_hi_train.dat
-│       │       mf_lo_train.dat
-│       │       Poisson_Lshape.npz
-│       │       reaction.npz
-│       │       stokes.npz
-│       │       
-│       ├───function
-│       │       dataset.py
-│       │       func.py
-│       │       func_uncertainty.py
-│       │       mf_dataset.py
-│       │       mf_func.gpi
-│       │       mf_func.py
-│       │       
-│       ├───operator
-│       │       ADR_solver.py
-│       │       advection_aligned_pideeponet.py
-│       │       advection_aligned_pideeponet_2d.py
-│       │       advection_unaligned_pideeponet.py
-│       │       advection_unaligned_pideeponet_2d.py
-│       │       antiderivative_aligned.py
-│       │       antiderivative_aligned_pideeponet.py
-│       │       antiderivative_unaligned.py
-│       │       antiderivative_unaligned_pideeponet.py
-│       │       diff_rec_aligned_pideeponet.py
-│       │       diff_rec_aligned_zcs_pideeponet.py
-│       │       diff_rec_unaligned_pideeponet.py
-│       │       poisson_1d_pideeponet.py
-│       │       stokes_aligned_pideeponet.py
-│       │       stokes_aligned_zcs_pideeponet.py
-│       │       
-│       ├───pinn_forward
-│       │       Allen_Cahn.py
-│       │       american_put.py
-│       │       Beltrami_flow.py
-│       │       black_scholes_call.py
-│       │       Burgers.py
-│       │       Burgers_RAR.py
-│       │       diffusion_1d.py
-│       │       diffusion_1d_exactBC.py
-│       │       diffusion_1d_resample.py
-│       │       diffusion_reaction.py
-│       │       elasticity_plate.py
-│       │       Euler_beam.py
-│       │       fractional_diffusion_1d.py
-│       │       fractional_Poisson_1d.py
-│       │       fractional_Poisson_2d.py
-│       │       fractional_Poisson_3d.py
-│       │       heat.py
-│       │       heat_resample.py
-│       │       Helmholtz_Dirichlet_2d.py
-│       │       Helmholtz_Dirichlet_2d_HPO.py
-│       │       Helmholtz_Neumann_2d_hole.py
-│       │       Helmholtz_Sound_hard_ABC_2d.py
-│       │       ide.py
-│       │       Klein_Gordon.py
-│       │       Kovasznay_flow.py
-│       │       Laplace_disk.py
-│       │       Lotka_Volterra.py
-│       │       ode_2nd.py
-│       │       ode_system.py
-│       │       Poisson_Dirichlet_1d.py
-│       │       Poisson_Dirichlet_1d_exactBC.py
-│       │       Poisson_Lshape.py
-│       │       Poisson_multiscale_1d.py
-│       │       Poisson_Neumann_1d.py
-│       │       Poisson_periodic_1d.py
-│       │       Poisson_PointSetOperator_1d.py
-│       │       Poisson_Robin_1d.py
-│       │       Schrodinger.ipynb
-│       │       Volterra_IDE.py
-│       │       wave_1d.py
-│       │       
-│       └───pinn_inverse
-│               brinkman_forchheimer.py
-│               diffusion_1d_inverse.py
-│               diffusion_reaction_rate.py
-│               elliptic_inverse_field.py
-│               elliptic_inverse_field_batch.py
-│               fractional_Poisson_1d_inverse.py
-│               fractional_Poisson_2d_inverse.py
-│               Lorenz_inverse.py
-│               Lorenz_inverse_forced.py
-│               Navier_Stokes_inverse.py
-│               reaction_inverse.py
-│               
 ├───deepxde_practice
 │       test_1.py
 │       test_2.py
 │       test_tensorflow.py
+│       
+├───experiments
+│       00_env_benchmark.py
 │       
 ├───notebooks
 │       01_exploratory.ipynb
@@ -670,32 +274,22 @@ C:pinn-heat-fluid/
 │           rep
 │           
 ├───results
-│       data_efficiency.png
-│       data_efficiency_headline.png
-│       data_efficiency_results.txt
 │       fdm_baselines_corrected.txt
 │       fdm_final_comparison.png
 │       fdm_heatmap.png
-│       fdm_refinement.png
 │       fdm_time_slices.png
 │       heat2d_3d_surface.png
 │       heat2d_3d_surface_v2.png
 │       heat2d_comparison.png
 │       heat2d_comparison_v2.png
-│       heat2d_cross_sections.png
-│       heat2d_cross_sections_v2.png
 │       heat2d_error_analysis_v2.png
 │       heat2d_loss.png
 │       heat2d_model-20779.weights.h5
 │       heat2d_model_v2-30916.weights.h5
-│       heat2d_summary.txt
-│       heat2d_summary_v2.txt
-│       heat2d_v1_v2_comparison.png
 │       
 └───utils
         metrics.py
         plotting.py
-
 
 
 
@@ -835,6 +429,8 @@ Which neural network configuration best solves physics-constrained PDEs?
 | [2, 64×4, 1] | swish | ~16,500 | ⏳ | ⏳ |
 | [2, 64×6, 1] | tanh | ~24,700 | ⏳ | ⏳ |
 
+
+This result will be updated soon. 
 *Hypothesis: tanh and sin activations will outperform ReLU because
 PDE residual computation requires smooth, non-zero second derivatives.*
 
