@@ -32,6 +32,8 @@ ap.add_argument("--adam-iters", type=int, default=20000)
 ap.add_argument("--lr", type=float, default=1e-3)
 ap.add_argument("--lbfgs-maxiter", type=int, default=15000)
 ap.add_argument("--device", default="gpu", choices=["gpu", "cpu"])
+ap.add_argument("--xla", default="off", choices=["off", "on"],
+                help="XLA JIT. Off by default: with hard constraints it was pathologically slow in testing")
 ap.add_argument("--name", default=None)
 ap.add_argument("--outdir", default=str(Path(__file__).resolve().parent / "results"))
 args = ap.parse_args()
@@ -49,6 +51,7 @@ import deepxde as dde
 dde.config.set_default_float(args.precision)
 dde.config.set_random_seed(args.seed)
 dde.optimizers.set_LBFGS_options(maxiter=args.lbfgs_maxiter)
+dde.config.enable_xla_jit(args.xla == "on")
 
 ALPHA = 0.4
 LAYERS = [2] + [64] * 4 + [1]
@@ -125,7 +128,7 @@ m_final = evaluate(model)
 
 name = args.name or f"heat1d_{args.precision}_{args.constraint}_s{args.seed}"
 result = dict(name=name, precision=args.precision, constraint=args.constraint,
-              seed=args.seed, n_domain=args.n_domain, adam_iters=args.adam_iters,
+              seed=args.seed, xla=args.xla, n_domain=args.n_domain, adam_iters=args.adam_iters,
               lr=args.lr, layers=LAYERS, lbfgs_maxiter=args.lbfgs_maxiter,
               lbfgs_iters_run=lbfgs_iters,
               lbfgs_stopped_early=bool(lbfgs_iters < args.lbfgs_maxiter),
