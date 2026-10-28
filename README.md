@@ -391,6 +391,12 @@ terms (200+200 points, weight 1). "Hard" = enforced exactly: u = sin(Ï€x) + x(1â
 Caveats: soft-constraint loss weights were not tuned; float64 runs hit the L-BFGS cap; the hard
 constraint embeds the exact initial profile, so gains may be smaller on other problems.
 
+- Seeds did not control network initialization in runs before Experiment 1b: DeepXDE's
+  `set_random_seed` does not affect the "Glorot uniform" string initializer under TensorFlow 2 /
+  Keras 3. Earlier "seeded" runs are independent random replicates, not reproducible per seed.
+  `experiments/01_heat1d_recipe.py` now uses a seeded initializer; results from Experiment 1b on
+  reproduce on CPU (identical to 10 digits in testing) and approximately on GPU.
+
 
 
 
