@@ -371,6 +371,31 @@ L2 = 1.55×10⁻⁴, L∞ = 3.53×10⁻⁴, 714 s on CPU.
 
 FDM is faster for simple 1D cases. 
 
+
+
+
+### Experiment 1: training-recipe ablation (1D transient heat, 5 seeds per setting)
+
+4×64 tanh network, 2,500 collocation points, 20,000 Adam iterations (lr 1e-3), then L-BFGS capped
+at 3,000 iterations; XLA off; Kaggle 2×T4, TensorFlow 2.20, DeepXDE 1.15. "Soft" = BC/IC as loss
+terms (200+200 points, weight 1). "Hard" = enforced exactly: u = sin(πx) + x(1−x)·t·N(x,t).
+
+| Precision | BC/IC | L2 median [min, max] | wall-flux L2 | stored-energy L2 | L-BFGS its (median) | stopped before cap | min/run* |
+|---|---|---|---|---|---|---|---|
+| float32 | soft | 3.0e-4 [2.7e-4, 4.3e-4] | 7.5e-4 | 1.7e-4 | 449 | 5/5 | 7.4 |
+| float32 | hard | 1.6e-5 [9.6e-6, 2.3e-5] | 4.0e-5 | 8.6e-6 | 378 | 5/5 | 7.1 |
+| float64 | soft | 4.8e-5 [2.6e-5, 1.0e-4] | 1.6e-4 | 3.0e-5 | 3000 | 0/5 | 37.6 |
+| float64 | hard | 1.6e-6 [9.3e-7, 3.1e-6] | 5.1e-6 | 8.8e-7 | 3000 | 0/5 | 31.6 |
+
+*Four jobs shared two GPUs, so times overstate single-job cost; use them only for comparison.
+Caveats: soft-constraint loss weights were not tuned; float64 runs hit the L-BFGS cap; the hard
+constraint embeds the exact initial profile, so gains may be smaller on other problems.
+
+
+
+
+
+
 #### Problem 2 — 2D Steady-State Heat Conduction
 
 ### Problem 2: 2D Steady-State Heat Conduction
