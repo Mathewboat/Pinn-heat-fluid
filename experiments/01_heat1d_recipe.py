@@ -32,6 +32,8 @@ ap.add_argument("--adam-iters", type=int, default=20000)
 ap.add_argument("--lr", type=float, default=1e-3)
 ap.add_argument("--lbfgs-maxiter", type=int, default=15000)
 ap.add_argument("--device", default="gpu", choices=["gpu", "cpu"])
+ap.add_argument("--bc-weight", type=float, default=1.0,
+                help="weight on the BC and IC loss terms (soft constraints only; 1.0 = unweighted)")
 ap.add_argument("--xla", default="off", choices=["off", "on"],
                 help="XLA JIT. Off by default: with hard constraints it was pathologically slow in testing")
 ap.add_argument("--name", default=None)
@@ -47,6 +49,22 @@ if args.device == "cpu":
 import numpy as np
 import tensorflow as tf
 import deepxde as dde
+
+
+class SeededGlorotUniform:
+    """Glorot-uniform initializer driven by a numpy Generator.
+    DeepXDE's string initializer ("Glorot uniform") is NOT controlled by dde.config.set_random_seed
+    with TensorFlow 2.x / Keras 3, so runs with the same seed started from different networks.
+    This one is reproducible for a given seed and gives different values for every layer."""
+
+    def __init__(self, seed):
+        self.rng = np.random.default_rng(seed)
+
+    def __call__(self, shape, dtype=None, **kwargs):
+        limit = np.sqrt(6.0 / (shape[0] + shape[1]))
+        return tf.constant(self.rng.uniform(-limit, limit, size=tuple(shape)),
+                           dtype=dtype if dtype is not None else tf.keras.backend.floatx())
+
 
 dde.config.set_default_float(args.precision)
 dde.config.set_random_seed(args.seed)
@@ -78,7 +96,7 @@ else:
     data = dde.data.TimePDE(geomtime, pde, [], num_domain=args.n_domain,
                             num_boundary=0, num_initial=0, solution=sol, num_test=5000)
 
-net = dde.nn.FNN(LAYERS, "tanh", "Glorot uniform")
+net = dde.nn.FNN(LAYERS, "tanh", SeededGlorotUniform(args.seed))
 if args.constraint == "hard":
     net.apply_output_transform(
         lambda x, y: dde.backend.sin(np.pi * x[:, 0:1])
@@ -112,13 +130,15 @@ def evaluate(model):
                 energy_l2=float(np.linalg.norm(E_pred - E_ex) / np.linalg.norm(E_ex)))
 
 
-model.compile("adam", lr=args.lr, metrics=["l2 relative error"])
+# soft constraints have 3 loss terms [PDE, BC, IC]; hard constraints only the PDE term
+lw = [1.0, args.bc_weight, args.bc_weight] if (args.constraint == "soft" and args.bc_weight != 1.0) else None
+model.compile("adam", lr=args.lr, metrics=["l2 relative error"], loss_weights=lw)
 t0 = time.perf_counter()
 _, ts = model.train(iterations=args.adam_iters, display_every=max(1, args.adam_iters // 4))
 t_adam = time.perf_counter() - t0
 m_adam = evaluate(model)
 
-model.compile("L-BFGS", metrics=["l2 relative error"])
+model.compile("L-BFGS", metrics=["l2 relative error"], loss_weights=lw)
 step0 = ts.step
 t0 = time.perf_counter()
 lh, ts = model.train()
@@ -126,9 +146,11 @@ t_lbfgs = time.perf_counter() - t0
 lbfgs_iters = int(ts.step - step0)
 m_final = evaluate(model)
 
-name = args.name or f"heat1d_{args.precision}_{args.constraint}_s{args.seed}"
+wtag = f"_w{args.bc_weight:g}" if lw is not None else ""
+name = args.name or f"heat1d_{args.precision}_{args.constraint}{wtag}_s{args.seed}"
 result = dict(name=name, precision=args.precision, constraint=args.constraint,
-              seed=args.seed, xla=args.xla, n_domain=args.n_domain, adam_iters=args.adam_iters,
+              seed=args.seed, init="seeded_glorot_uniform", xla=args.xla, bc_weight=args.bc_weight if lw is not None else 1.0,
+              n_domain=args.n_domain, adam_iters=args.adam_iters,
               lr=args.lr, layers=LAYERS, lbfgs_maxiter=args.lbfgs_maxiter,
               lbfgs_iters_run=lbfgs_iters,
               lbfgs_stopped_early=bool(lbfgs_iters < args.lbfgs_maxiter),
