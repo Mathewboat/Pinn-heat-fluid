@@ -1,0 +1,44 @@
+{
+  "name": "heat1d_f32_soft_w100_s2",
+  "precision": "float32",
+  "constraint": "soft",
+  "seed": 2,
+  "init": "seeded_glorot_uniform",
+  "xla": "off",
+  "bc_weight": 100.0,
+  "n_domain": 2500,
+  "adam_iters": 20000,
+  "lr": 0.001,
+  "layers": [
+    2,
+    64,
+    64,
+    64,
+    64,
+    1
+  ],
+  "lbfgs_maxiter": 3000,
+  "lbfgs_iters_run": 445,
+  "lbfgs_stopped_early": true,
+  "final_train_loss_terms": [
+    9.932322427630424e-06,
+    5.571478709498479e-07,
+    1.0770951064387191e-07
+  ],
+  "after_adam": {
+    "l2": 0.013472402835370894,
+    "linf": 0.006674512755125874,
+    "flux_l2": 0.004896019927821515,
+    "energy_l2": 0.01255654631654432
+  },
+  "final": {
+    "l2": 0.0002602128041176271,
+    "linf": 0.00023425370454787972,
+    "flux_l2": 0.0006940326371160678,
+    "energy_l2": 0.00013820554929565063
+  },
+  "seconds_adam": 161.7,
+  "seconds_lbfgs": 279.1,
+  "deepxde": "1.15.0",
+  "tensorflow": "2.20.0"
+}
