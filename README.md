@@ -398,7 +398,14 @@ constraint embeds the exact initial profile, so gains may be smaller on other pr
   reproduce on CPU (identical to 10 digits in testing) and approximately on GPU.
 
 
-
+**Findings (1D heat, float32, 5 reproducible runs per setting).** Exact enforcement of BC/IC gave
+median L2 1.2e-5, about 20x lower than the best of four BC/IC loss weights (w=100: 2.3e-4); every hard
+run beat every soft run. Weights 10-100 gave medians ~1.7x lower than weight 1 with a tighter spread, but
+the run-to-run ranges overlap with weight 1, so the improvement is not established with 5 runs; weight
+1000 was worse. L-BFGS stopped before its 3,000-iteration cap in all 25 runs (median 234-366 its).
+A full-length GPU run reproduced exactly. Limitations: coarse weight search; the hard constraint embeds
+the exact initial profile; one problem, one network size; float64 results (Experiment 1a) used an
+unseeded initializer and only soft weight 1.
 
 
 
