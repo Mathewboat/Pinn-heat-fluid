@@ -27,6 +27,8 @@ ap.add_argument("--seeds", type=int, nargs="+", default=[0])
 ap.add_argument("--gpus", type=int, nargs="+", default=[0])
 ap.add_argument("--procs-per-gpu", type=int, default=1)
 ap.add_argument("--name-template", required=True)
+ap.add_argument("--job-timeout-min", type=float, default=0,
+                help="kill a job that runs longer than this many minutes (0 = no limit)")
 ap.add_argument("--outdir", required=True)
 ap.add_argument("--extra", nargs=argparse.REMAINDER, default=[])
 args = ap.parse_args()
@@ -72,13 +74,26 @@ while todo or running:
             print(f"[{time.time() - t_start:6.0f}s] start  {name}  (gpu {slots[i]})", flush=True)
     for i in list(running):
         name, proc, fh, t0 = running[i]
-        if proc.poll() is not None:
+        timed_out = False
+        if args.job_timeout_min > 0 and proc.poll() is None and (time.time() - t0) > args.job_timeout_min * 60:
+            proc.terminate()
+            try:
+                proc.wait(timeout=30)
+            except subprocess.TimeoutExpired:
+                proc.kill()
+                try:
+                    proc.wait(timeout=30)
+                except subprocess.TimeoutExpired:
+                    pass
+            timed_out = True
+        if timed_out or proc.poll() is not None:
             fh.close()
             done_count += 1
-            ok = proc.returncode == 0 and (outdir / f"{name}.json").exists()
+            ok = (not timed_out) and proc.returncode == 0 and (outdir / f"{name}.json").exists()
             if not ok:
-                failed.append(name)
-            print(f"[{time.time() - t_start:6.0f}s] {'done ' if ok else 'FAILED'} {name}  "
+                failed.append(name + (" (TIMEOUT)" if timed_out else ""))
+            status = "TIMEOUT" if timed_out else ("done " if ok else "FAILED")
+            print(f"[{time.time() - t_start:6.0f}s] {status} {name}  "
                   f"({time.time() - t0:.0f}s)  [{done_count} finished]", flush=True)
             del running[i]
     time.sleep(2)
