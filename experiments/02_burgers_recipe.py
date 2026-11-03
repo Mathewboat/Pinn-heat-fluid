@@ -125,11 +125,21 @@ def evaluate(model):
 lw = [1.0, args.bc_weight, args.bc_weight] if (args.constraint == "soft" and args.bc_weight != 1.0) else None
 callbacks = [dde.callbacks.PDEPointResampler(period=1000)] if args.resample else []
 
+wtag = f"_w{args.bc_weight:g}" if lw is not None else ""
+name = args.name or f"burgers_{args.precision}_{args.constraint}{wtag}_s{args.seed}"
+out = Path(args.outdir)
+out.mkdir(parents=True, exist_ok=True)
+
 model.compile("adam", lr=args.lr, loss_weights=lw)
 t0 = time.perf_counter()
 _, ts = model.train(iterations=args.adam_iters, display_every=max(1, args.adam_iters // 4), callbacks=callbacks)
 t_adam = time.perf_counter() - t0
 m_adam = evaluate(model)
+# Save the Adam-stage result right away (".partial", not ".json"), so a run that hangs or is killed
+# during L-BFGS still leaves its Adam-stage metrics behind.
+(out / f"{name}.partial").write_text(json.dumps(dict(name=name, stage="after_adam", after_adam=m_adam,
+                                                     seconds_adam=round(t_adam, 1))), encoding="utf-8")
+print(f"{name}: Adam stage done, L2={m_adam['l2']:.2e} ({t_adam:.0f}s); starting L-BFGS", flush=True)
 
 model.compile("L-BFGS", loss_weights=lw)
 step0 = ts.step
@@ -139,8 +149,6 @@ t_lbfgs = time.perf_counter() - t0
 lbfgs_iters = int(ts.step - step0)
 m_final = evaluate(model)
 
-wtag = f"_w{args.bc_weight:g}" if lw is not None else ""
-name = args.name or f"burgers_{args.precision}_{args.constraint}{wtag}_s{args.seed}"
 result = dict(name=name, constraint=args.constraint, precision=args.precision, seed=args.seed,
               init="seeded_glorot_uniform", xla=args.xla,
               bc_weight=args.bc_weight if lw is not None else 1.0, resample=args.resample,
@@ -153,8 +161,6 @@ result = dict(name=name, constraint=args.constraint, precision=args.precision, s
               after_adam=m_adam, final=m_final,
               seconds_adam=round(t_adam, 1), seconds_lbfgs=round(t_lbfgs, 1),
               deepxde=dde.__version__, tensorflow=tf.__version__)
-out = Path(args.outdir)
-out.mkdir(parents=True, exist_ok=True)
 (out / f"{name}.json").write_text(json.dumps(result, indent=2), encoding="utf-8")
 print(f"{name}: after Adam L2={m_adam['l2']:.2e} | final L2={m_final['l2']:.2e} "
       f"near-shock={m_final['l2_near_shock']:.2e} Linf={m_final['linf']:.2e} | "
