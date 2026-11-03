@@ -576,6 +576,15 @@ Changes to be committed:
 
 
 
+**Findings (Burgers, float32, 8x20 tanh network, 10,000 collocation points, 5 runs per setting).**
+Hard enforcement of the IC/BC gave a median near-shock L2 of 4.6e-4 versus 2.1e-3 for soft weight 1
+and 2.9e-3 for soft weight 100. The runs split into two groups: all 5 hard runs captured the shock
+(near-shock L2 3.4e-4 to 5.2e-4), but only 2 of 5 soft (w=1) and 1 of 5 soft (w=100) runs did; the rest
+smeared it (>= 1e-3). The successful soft runs were as accurate as the hard runs, and 5 vs 5 runs
+cannot separate the distributions (exact rank test p = 0.22), so I read this as higher reliability,
+not higher peak accuracy; more runs are needed to confirm it. Loss weight 100 did not help. Against a
+classical central finite-difference solver, the best PINN runs match a ~1,000-point solver (L2 4.1e-4)
+but need ~17 GPU-minutes per run versus ~0.2 s.
 
 
 
