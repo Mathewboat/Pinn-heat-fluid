@@ -1,0 +1,47 @@
+{
+  "name": "burgers_f32_hard_s9",
+  "constraint": "hard",
+  "precision": "float32",
+  "seed": 9,
+  "init": "seeded_glorot_uniform",
+  "xla": "off",
+  "bc_weight": 1.0,
+  "resample": false,
+  "layers": [
+    2,
+    20,
+    20,
+    20,
+    20,
+    20,
+    20,
+    20,
+    20,
+    1
+  ],
+  "n_domain": 10000,
+  "n_boundary": 0,
+  "n_initial": 0,
+  "adam_iters": 20000,
+  "lr": 0.001,
+  "lbfgs_maxiter": 3000,
+  "lbfgs_iters_run": 1350,
+  "lbfgs_stopped_early": true,
+  "final_train_loss_terms": [
+    5.314933332556393e-06
+  ],
+  "after_adam": {
+    "l2": 0.009357282240610993,
+    "l2_near_shock": 0.01233333669993392,
+    "linf": 0.05158626959380064
+  },
+  "final": {
+    "l2": 0.00032584986403415446,
+    "l2_near_shock": 0.00032092135445297907,
+    "linf": 0.0014506745618217964
+  },
+  "seconds_adam": 230.4,
+  "seconds_lbfgs": 707.2,
+  "deepxde": "1.15.0",
+  "tensorflow": "2.21.0"
+}
