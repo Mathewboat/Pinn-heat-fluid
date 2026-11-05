@@ -487,56 +487,7 @@ Runs found: 1a = 20 (unseeded initialization), 1b = 25 (seeded initialization).
 
 Note: with 5 vs 5 runs and completely separated ranges the smallest possible two-sided p is 0.0079; four comparisons were made, so treat it as a rank statement, not a precise probability.
 
-Saved results/figures/heat1d_recipe_l2.png and results/tables/heat1d_experiments.md
-rm 'results/kaggle/smoke/heat1d_float32_hard_s0.json'
-warning: in the working copy of 'analysis/summarize_heat1d.py', LF will be replaced by CRLF the next time Git touches it
-warning: in the working copy of 'baselines/classical_baselines.py', LF will be replaced by CRLF the next time Git touches it
-[main 6bae446] Add classical baselines (CN, direct 2D, Burgers FD, Cole-Hopf check) and Experiment 1 summarizer
- 6 files changed, 507 insertions(+), 40 deletions(-)
- create mode 100644 analysis/summarize_heat1d.py
- create mode 100644 baselines/classical_baselines.py
- create mode 100644 results/baselines/classical_baselines.json
- create mode 100644 results/figures/heat1d_recipe_l2.png
- delete mode 100644 results/kaggle/smoke/heat1d_float32_hard_s0.json
- create mode 100644 results/tables/heat1d_experiments.md
-Enumerating objects: 17, done.
-Counting objects: 100% (17/17), done.
-Delta compression using up to 8 threads
-Compressing objects: 100% (11/11), done.
-Writing objects: 100% (14/14), 63.29 KiB | 4.87 MiB/s, done.
-Total 14 (delta 3), reused 0 (delta 0), pack-reused 0 (from 0)
-remote: Resolving deltas: 100% (3/3), completed with 3 local objects.
-To https://github.com/Mathewboat/Pinn-heat-fluid.git
-   80659b0..6bae446  main -> main
-PS C:\kwame\Programming stuff\github project\github project\Pinn-heat-fluid>git status
-On branch main
-Your branch is up to date with 'origin/main'.
 
-nothing to commit, working tree clean
-PS C:\kwame\Programming stuff\github project\github project\Pinn-heat-fluid>git add -A
-PS C:\kwame\Programming stuff\github project\github project\Pinn-heat-fluid>git status
-On branch main
-Your branch is up to date with 'origin/main'.
-
-nothing to commit, working tree clean
-PS C:\kwame\Programming stuff\github project\github project\Pinn-heat-fluid>git status
-On branch main
-Your branch is up to date with 'origin/main'.
-
-Changes not staged for commit:
-  (use "git add <file>..." to update what will be committed)
-  (use "git restore <file>..." to discard changes in working directory)
-        modified:   README.md
-
-no changes added to commit (use "git add" and/or "git commit -a")
-PS C:\kwame\Programming stuff\github project\github project\Pinn-heat-fluid>git add -A
-PS C:\kwame\Programming stuff\github project\github project\Pinn-heat-fluid>git status
-On branch main
-Your branch is up to date with 'origin/main'.
-
-Changes to be committed:
-  (use "git restore --staged <file>..." to unstage)
-        modified:   README.md
 
 
 
@@ -576,17 +527,18 @@ Changes to be committed:
 
 
 
-**Findings (Burgers, float32, 8x20 tanh network, 10,000 collocation points, 5 runs per setting).**
-Hard enforcement of the IC/BC gave a median near-shock L2 of 4.6e-4 versus 2.1e-3 for soft weight 1
-and 2.9e-3 for soft weight 100. The runs split into two groups: all 5 hard runs captured the shock
-(near-shock L2 3.4e-4 to 5.2e-4), but only 2 of 5 soft (w=1) and 1 of 5 soft (w=100) runs did; the rest
-smeared it (>= 1e-3). The successful soft runs were as accurate as the hard runs, and 5 vs 5 runs
-cannot separate the distributions (exact rank test p = 0.22), so I read this as higher reliability,
-not higher peak accuracy; more runs are needed to confirm it. Loss weight 100 did not help. Against a
-classical central finite-difference solver, the best PINN runs match a ~1,000-point solver (L2 4.1e-4)
-but need ~17 GPU-minutes per run versus ~0.2 s.
-
-
+**Findings (Burgers, 8x20 tanh network, 10,000 collocation points, L-BFGS cap 3,000).** In float32,
+hard and soft (weight 1) enforcement of the IC/BC were indistinguishable with 10 runs each: median
+whole-grid L2 4.7e-4 vs 4.7e-4, near-shock L2 4.3e-4 vs 5.2e-4 (exact rank test p = 0.53 and 0.12);
+9/10 hard and 6/10 soft runs captured the shock (Fisher p = 0.30). An earlier 5-run comparison had
+suggested a 4.6x near-shock advantage for hard constraints; it disappeared when 5 more runs were added.
+The two batches ran under different TensorFlow versions (2.20.0 and 2.21.0), so chance and version
+effects cannot be separated. IC/BC loss weight 100 was worse than weight 1 (p = 0.02-0.04, n = 5 vs 10).
+Run-to-run failures were associated with early L-BFGS stops (Spearman rho = -0.66 between L-BFGS
+iterations and near-shock error, n = 20). Float64 with hard constraints (3 runs, all hit the L-BFGS cap,
+38-50 min each) gave median L2 2.9e-4, about 1.6x lower than float32 hard; with n = 3 this is
+preliminary. A classical central finite-difference solver reaches L2 4.1e-4 with 1,021 grid points in
+0.2 s; the best PINN runs are comparable to a ~1,000-1,500-point solver at 10^3-10^4 times the compute.
 
 
 
