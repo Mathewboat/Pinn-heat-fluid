@@ -4,24 +4,24 @@
 
 | setting | n | L2 median [min, max] | near-shock L2 median [min, max] | Linf median [min, max] | L-BFGS its (median) | stopped before cap | min/run |
 |---|---|---|---|---|---|---|---|
-| 32 soft w=1 | 10 | 4.74e-04 [2.88e-04, 1.12e-03] | 5.17e-04 [2.64e-04, 2.35e-03] | 2.82e-03 [1.68e-03, 1.22e-02] | 1063 | 10/10 | 14.7 |
-| 32 soft w=100 | 5 | 1.66e-03 [6.36e-04, 1.78e-03] | 2.94e-03 [5.19e-04, 3.57e-03] | 1.67e-02 [2.97e-03, 1.92e-02] | 1698 | 5/5 | 16.8 |
-| 32 hard | 10 | 4.68e-04 [2.57e-04, 6.79e-04] | 4.34e-04 [2.09e-04, 8.62e-04] | 2.48e-03 [1.24e-03, 4.42e-03] | 1415 | 10/10 | 17.2 |
-| 64 hard | 3 | 2.86e-04 [1.51e-04, 3.27e-04] | 3.64e-04 [2.21e-04, 3.98e-04] | 2.39e-03 [1.63e-03, 2.41e-03] | 3000 | 0/3 | 45.8 |
+| f32 soft w=1 | 10 | 4.74e-04 [2.88e-04, 1.12e-03] | 5.17e-04 [2.64e-04, 2.35e-03] | 2.82e-03 [1.68e-03, 1.22e-02] | 1063 | 10/10 | 14.7 |
+| f32 soft w=100 | 5 | 1.66e-03 [6.36e-04, 1.78e-03] | 2.94e-03 [5.19e-04, 3.57e-03] | 1.67e-02 [2.97e-03, 1.92e-02] | 1698 | 5/5 | 16.8 |
+| f32 hard | 10 | 4.68e-04 [2.57e-04, 6.79e-04] | 4.34e-04 [2.09e-04, 8.62e-04] | 2.48e-03 [1.24e-03, 4.42e-03] | 1415 | 10/10 | 17.2 |
+| f64 hard | 3 | 2.86e-04 [1.51e-04, 3.27e-04] | 3.64e-04 [2.21e-04, 3.98e-04] | 2.39e-03 [1.63e-03, 2.41e-03] | 3000 | 0/3 | 45.8 |
 
 ### Each setting vs float32 soft w=1 (exact two-sided Mann-Whitney p; ratio = reference median / setting median)
 
 | setting | metric | ratio of medians | worst run of setting vs best run of reference | p |
 |---|---|---|---|---|
-| 32 soft w=100 | L2 | 0.29x | 6.19 | 0.0193 |
-| 32 soft w=100 | near-shock L2 | 0.18x | 13.51 | 0.0400 |
-| 32 soft w=100 | Linf | 0.17x | 11.48 | 0.0400 |
-| 32 hard | L2 | 1.01x | 2.36 | 0.5288 |
-| 32 hard | near-shock L2 | 1.19x | 3.26 | 0.1230 |
-| 32 hard | Linf | 1.14x | 2.64 | 0.1431 |
-| 64 hard | L2 | 1.66x | 1.13 | 0.0280 |
-| 64 hard | near-shock L2 | 1.42x | 1.51 | 0.0280 |
-| 64 hard | Linf | 1.18x | 1.44 | 0.1608 |
+| f32 soft w=100 | L2 | 0.29x | 6.19 | 0.0193 |
+| f32 soft w=100 | near-shock L2 | 0.18x | 13.51 | 0.0400 |
+| f32 soft w=100 | Linf | 0.17x | 11.48 | 0.0400 |
+| f32 hard | L2 | 1.01x | 2.36 | 0.5288 |
+| f32 hard | near-shock L2 | 1.19x | 3.26 | 0.1230 |
+| f32 hard | Linf | 1.14x | 2.64 | 0.1431 |
+| f64 hard | L2 | 1.66x | 1.13 | 0.0280 |
+| f64 hard | near-shock L2 | 1.42x | 1.51 | 0.0280 |
+| f64 hard | Linf | 1.18x | 1.44 | 0.1608 |
 
 'worst/best' below 1 means every run of the setting beat every reference run. With 5 vs 5 the smallest possible p is 0.0079; several comparisons are made, so read p as a rank statement only.
 

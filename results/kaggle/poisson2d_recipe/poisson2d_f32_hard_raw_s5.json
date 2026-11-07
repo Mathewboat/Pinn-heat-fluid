@@ -1,0 +1,44 @@
+{
+  "name": "poisson2d_f32_hard_raw_s5",
+  "constraint": "hard",
+  "scale": "raw",
+  "precision": "float32",
+  "seed": 5,
+  "init": "seeded_glorot_uniform",
+  "xla": "off",
+  "bc_weight": 1.0,
+  "layers": [
+    2,
+    64,
+    64,
+    64,
+    64,
+    1
+  ],
+  "n_domain": 2500,
+  "n_boundary": 0,
+  "adam_iters": 20000,
+  "lr": 0.001,
+  "lbfgs_maxiter": 3000,
+  "lbfgs_iters_run": 149,
+  "lbfgs_stopped_early": true,
+  "final_train_loss_terms": [
+    5.503063782441586e-09
+  ],
+  "after_adam": {
+    "l2": 0.00044443046004615167,
+    "linf": 2.735330211153797e-05,
+    "flux_l2": 0.001030891636328627,
+    "heat_total_err": 0.0002812614643367815
+  },
+  "final": {
+    "l2": 9.140942028875229e-06,
+    "linf": 6.823704324105534e-07,
+    "flux_l2": 3.8269857731822026e-05,
+    "heat_total_err": 6.171916491158815e-06
+  },
+  "seconds_adam": 191.0,
+  "seconds_lbfgs": 95.3,
+  "deepxde": "1.15.0",
+  "tensorflow": "2.21.0"
+}
