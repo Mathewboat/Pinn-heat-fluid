@@ -255,14 +255,32 @@ C:pinn-heat-fluid/
 │   └───results
 │           three
 │           
+├───analysis
+│       summarize_burgers.py
+│       summarize_heat1d.py
+│       
+├───baselines
+│       classical_baselines.py
+│       
 ├───deepxde_practice
 │       test_1.py
 │       test_2.py
 │       test_tensorflow.py
 │       
 ├───experiments
-│       00_env_benchmark.py
-│       
+│   │   00_env_benchmark.py
+│   │   01_heat1d_recipe.py
+│   │   02_burgers_recipe.py
+│   │   03_poisson2d_recipe.py
+│   │   run_grid.py
+│   │   
+│   └───__pycache__
+│           01_heat1d_recipe.cpython-311.pyc
+│           02_burgers_recipe.cpython-311.pyc
+│           03_poisson2d_recipe.cpython-311.pyc
+│           run_grid.cpython-311.pyc
+│           
+├───kaggle
 ├───notebooks
 │       01_exploratory.ipynb
 │       02_visualization.ipynb
@@ -274,19 +292,170 @@ C:pinn-heat-fluid/
 │           rep
 │           
 ├───results
-│       fdm_baselines_corrected.txt
-│       fdm_final_comparison.png
-│       fdm_heatmap.png
-│       fdm_time_slices.png
-│       heat2d_3d_surface.png
-│       heat2d_3d_surface_v2.png
-│       heat2d_comparison.png
-│       heat2d_comparison_v2.png
-│       heat2d_error_analysis_v2.png
-│       heat2d_loss.png
-│       heat2d_model-20779.weights.h5
-│       heat2d_model_v2-30916.weights.h5
-│       
+│   │   fdm_baselines_corrected.txt
+│   │   fdm_final_comparison.png
+│   │   fdm_heatmap.png
+│   │   fdm_time_slices.png
+│   │   heat2d_3d_surface.png
+│   │   heat2d_3d_surface_v2.png
+│   │   heat2d_comparison.png
+│   │   heat2d_comparison_v2.png
+│   │   heat2d_error_analysis_v2.png
+│   │   heat2d_loss.png
+│   │   heat2d_model-20779.weights.h5
+│   │   heat2d_model_v2-30916.weights.h5
+│   │   
+│   ├───baselines
+│   │       classical_baselines.json
+│   │       
+│   ├───figures
+│   │       burgers_recipe.png
+│   │       heat1d_recipe_l2.png
+│   │       
+│   ├───kaggle
+│   │   │   notebook-1-2-1.ipynb
+│   │   │   
+│   │   ├───benchmarks
+│   │   │       BENCHMARK.md
+│   │   │       bench_tensorflow_cpu_float32.json
+│   │   │       bench_tensorflow_cpu_float64.json
+│   │   │       bench_tensorflow_gpu_float32.json
+│   │   │       bench_tensorflow_gpu_float32_xlaoff.json
+│   │   │       bench_tensorflow_gpu_float64.json
+│   │   │       bench_tensorflow_gpu_float64_xlaoff.json
+│   │   │       
+│   │   ├───burgers_float64
+│   │   │       burgers_f64_hard_s0.json
+│   │   │       burgers_f64_hard_s1.json
+│   │   │       burgers_f64_hard_s2.json
+│   │   │       
+│   │   ├───burgers_more_seeds
+│   │   │       burgers_f32_hard_s5.json
+│   │   │       burgers_f32_hard_s6.json
+│   │   │       burgers_f32_hard_s7.json
+│   │   │       burgers_f32_hard_s8.json
+│   │   │       burgers_f32_hard_s9.json
+│   │   │       burgers_f32_soft_s5.json
+│   │   │       burgers_f32_soft_s6.json
+│   │   │       burgers_f32_soft_s7.json
+│   │   │       burgers_f32_soft_s8.json
+│   │   │       burgers_f32_soft_s9.json
+│   │   │       
+│   │   ├───burgers_recipe
+│   │   │       burgers_f32_hard_s0.json
+│   │   │       burgers_f32_hard_s1.json
+│   │   │       burgers_f32_hard_s2.json
+│   │   │       burgers_f32_hard_s3.json
+│   │   │       burgers_f32_hard_s4.json
+│   │   │       burgers_f32_soft_w100_s0.json
+│   │   │       burgers_f32_soft_w100_s1.json
+│   │   │       burgers_f32_soft_w100_s2.json
+│   │   │       burgers_f32_soft_w100_s3.json
+│   │   │       burgers_f32_soft_w100_s4.json
+│   │   │       burgers_f32_soft_w1_s0.json
+│   │   │       burgers_f32_soft_w1_s1.json
+│   │   │       burgers_f32_soft_w1_s2.json
+│   │   │       burgers_f32_soft_w1_s3.json
+│   │   │       burgers_f32_soft_w1_s4.json
+│   │   │       
+│   │   ├───heat1d_recipe
+│   │   │       heat1d_float32_hard_s0.json
+│   │   │       heat1d_float32_hard_s1.json
+│   │   │       heat1d_float32_hard_s2.json
+│   │   │       heat1d_float32_hard_s3.json
+│   │   │       heat1d_float32_hard_s4.json
+│   │   │       heat1d_float32_soft_s0.json
+│   │   │       heat1d_float32_soft_s1.json
+│   │   │       heat1d_float32_soft_s2.json
+│   │   │       heat1d_float32_soft_s3.json
+│   │   │       heat1d_float32_soft_s4.json
+│   │   │       heat1d_float64_hard_s0.json
+│   │   │       heat1d_float64_hard_s1.json
+│   │   │       heat1d_float64_hard_s2.json
+│   │   │       heat1d_float64_hard_s3.json
+│   │   │       heat1d_float64_hard_s4.json
+│   │   │       heat1d_float64_soft_s0.json
+│   │   │       heat1d_float64_soft_s1.json
+│   │   │       heat1d_float64_soft_s2.json
+│   │   │       heat1d_float64_soft_s3.json
+│   │   │       heat1d_float64_soft_s4.json
+│   │   │       
+│   │   ├───heat1d_weights
+│   │   │   │   heat1d_f32_hard_s0.json
+│   │   │   │   heat1d_f32_hard_s1.json
+│   │   │   │   heat1d_f32_hard_s2.json
+│   │   │   │   heat1d_f32_hard_s3.json
+│   │   │   │   heat1d_f32_hard_s4.json
+│   │   │   │   heat1d_f32_soft_w1000_s0.json
+│   │   │   │   heat1d_f32_soft_w1000_s1.json
+│   │   │   │   heat1d_f32_soft_w1000_s2.json
+│   │   │   │   heat1d_f32_soft_w1000_s3.json
+│   │   │   │   heat1d_f32_soft_w1000_s4.json
+│   │   │   │   heat1d_f32_soft_w100_s0.json
+│   │   │   │   heat1d_f32_soft_w100_s1.json
+│   │   │   │   heat1d_f32_soft_w100_s2.json
+│   │   │   │   heat1d_f32_soft_w100_s3.json
+│   │   │   │   heat1d_f32_soft_w100_s4.json
+│   │   │   │   heat1d_f32_soft_w10_s0.json
+│   │   │   │   heat1d_f32_soft_w10_s1.json
+│   │   │   │   heat1d_f32_soft_w10_s2.json
+│   │   │   │   heat1d_f32_soft_w10_s3.json
+│   │   │   │   heat1d_f32_soft_w10_s4.json
+│   │   │   │   heat1d_f32_soft_w1_s0.json
+│   │   │   │   heat1d_f32_soft_w1_s1.json
+│   │   │   │   heat1d_f32_soft_w1_s2.json
+│   │   │   │   heat1d_f32_soft_w1_s3.json
+│   │   │   │   heat1d_f32_soft_w1_s4.json
+│   │   │   │   
+│   │   │   └───repro_check
+│   │   │           heat1d_f32_hard_s0_repeat.json
+│   │   │           
+│   │   └───poisson2d_recipe
+│   │           poisson2d_f32_hard_raw_s0.json
+│   │           poisson2d_f32_hard_raw_s1.json
+│   │           poisson2d_f32_hard_raw_s2.json
+│   │           poisson2d_f32_hard_raw_s3.json
+│   │           poisson2d_f32_hard_raw_s4.json
+│   │           poisson2d_f32_hard_raw_s5.json
+│   │           poisson2d_f32_hard_raw_s6.json
+│   │           poisson2d_f32_hard_raw_s7.json
+│   │           poisson2d_f32_hard_raw_s8.json
+│   │           poisson2d_f32_hard_raw_s9.json
+│   │           poisson2d_f32_hard_rescaled_s0.json
+│   │           poisson2d_f32_hard_rescaled_s1.json
+│   │           poisson2d_f32_hard_rescaled_s2.json
+│   │           poisson2d_f32_hard_rescaled_s3.json
+│   │           poisson2d_f32_hard_rescaled_s4.json
+│   │           poisson2d_f32_hard_rescaled_s5.json
+│   │           poisson2d_f32_hard_rescaled_s6.json
+│   │           poisson2d_f32_hard_rescaled_s7.json
+│   │           poisson2d_f32_hard_rescaled_s8.json
+│   │           poisson2d_f32_hard_rescaled_s9.json
+│   │           poisson2d_f32_soft_raw_s0.json
+│   │           poisson2d_f32_soft_raw_s1.json
+│   │           poisson2d_f32_soft_raw_s2.json
+│   │           poisson2d_f32_soft_raw_s3.json
+│   │           poisson2d_f32_soft_raw_s4.json
+│   │           poisson2d_f32_soft_raw_s5.json
+│   │           poisson2d_f32_soft_raw_s6.json
+│   │           poisson2d_f32_soft_raw_s7.json
+│   │           poisson2d_f32_soft_raw_s8.json
+│   │           poisson2d_f32_soft_raw_s9.json
+│   │           poisson2d_f32_soft_rescaled_s0.json
+│   │           poisson2d_f32_soft_rescaled_s1.json
+│   │           poisson2d_f32_soft_rescaled_s2.json
+│   │           poisson2d_f32_soft_rescaled_s3.json
+│   │           poisson2d_f32_soft_rescaled_s4.json
+│   │           poisson2d_f32_soft_rescaled_s5.json
+│   │           poisson2d_f32_soft_rescaled_s6.json
+│   │           poisson2d_f32_soft_rescaled_s7.json
+│   │           poisson2d_f32_soft_rescaled_s8.json
+│   │           poisson2d_f32_soft_rescaled_s9.json
+│   │           
+│   └───tables
+│           burgers_experiments.md
+│           heat1d_experiments.md
+│           
 └───utils
         metrics.py
         plotting.py

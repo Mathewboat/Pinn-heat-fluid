@@ -47,7 +47,7 @@ def key(r):
 def label(k):
     prec, con, w, rs = k
     base = "hard" if con == "hard" else f"soft w={w:g}"
-    return f"{prec[-2:]} {base}" + (" +resample" if rs else "")
+    return f"{ {'float32': 'f32', 'float64': 'f64'}.get(prec, prec) } {base}" + (" +resample" if rs else "")
 
 
 groups = defaultdict(list)
