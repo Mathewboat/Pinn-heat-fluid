@@ -212,7 +212,7 @@ Point counts for each experiment are given in the Results tables.
 ```
 
 
-C:pinn-heat-fluid/
+Mathewboat/pinn-heat-fluid/
 │   .gitignore
 │   burgers_test.py
 │   data_validation_test.py
@@ -998,7 +998,7 @@ frameworks in structural health monitoring and process control.
 
 **Mathew Ahenkora Boateng**
 Prospective Graduate Applicant, Mechanical Engineering
-Kwame Nkrumah University of Science and Technology (KNUST)
+Undergraduate: Kwame Nkrumah University of Science and Technology (KNUST)
 
 - 📧 mkwameboateng@gmail.com
 - 🔗 [linkedin.com/in/mathew-ahenkora-boateng-7222011b6](https://www.linkedin.com/in/mathew-ahenkora-boateng-7222011b6)
@@ -1019,4 +1019,4 @@ equation is from the original PINN paper's supplementary repository.
 
 ---
 
-*Last updated: October 2026 · Status: In Progress*
+*Last updated: Novermber 2026 · Status: In Progress*
