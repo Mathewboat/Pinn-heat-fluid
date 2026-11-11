@@ -945,9 +945,9 @@ frameworks in structural health monitoring and process control.
 - [x] Repository setup and documentation
 - [x] FDM baseline solver — 1D heat equation
 - [x] Grid refinement study and error analysis
-- [ ] PINN solver — 1D heat equation (Days 9–13)
-- [ ] PINN vs FDM data efficiency comparison
-- [ ] PINN solver — 2D steady-state heat equation (Days 14–18)
+- [x] PINN solver — 1D heat equation (Days 9–13)
+- [x] PINN vs FDM data efficiency comparison
+- [x] PINN solver — 2D steady-state heat equation (Days 14–18)
 - [ ] PINN solver — Burgers' equation (Days 19–24)
 - [ ] Architecture and activation function study
 - [ ] Full results table and figures
