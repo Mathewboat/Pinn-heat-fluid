@@ -538,7 +538,7 @@ wall-clock time here (about 0.12 s versus about 17 min of PINN training).
 Single run (unseeded single run, 4×64 tanh, 20k Adam + L-BFGS, 2,900 points):
 L2 = 1.55×10⁻⁴, L∞ = 3.53×10⁻⁴, 714 s on CPU.
 
-FDM is faster for simple 1D cases. 
+FDM is faster for simple 1D cases. Further info will be added after running with kaggle
 
 
 
