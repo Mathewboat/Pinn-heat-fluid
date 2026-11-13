@@ -825,6 +825,11 @@ This result will be updated soon.
 *Hypothesis: tanh and sin activations will outperform ReLU because
 PDE residual computation requires smooth, non-zero second derivatives.*
 
+ **Note:** This project is actively in progress. Results will be updated
+> as each phase completes. Current status: FDM baseline complete ✓,
+> PINN training in progress.
+
+
 .
 
 ---
