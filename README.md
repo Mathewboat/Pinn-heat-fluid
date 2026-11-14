@@ -801,6 +801,7 @@ Note: "For simple rectangular domains, FDM remains computationally faster. The P
 | L∞ Error | — (reference) | ⏳ | — |
 | Shock region error | — | ⏳ | Key challenge region |
 
+**Note:** This project is actively in progress. Results will be updated
 
 ## Corrections log
 - An early 2D FDM baseline used an under-converged Gauss-Seidel iteration and
@@ -819,6 +820,7 @@ Which neural network configuration best solves physics-constrained PDEs?
 | [2, 64×4, 1] | sin (SIREN) | ~16,500 | ⏳ | ⏳ |
 | [2, 64×4, 1] | swish | ~16,500 | ⏳ | ⏳ |
 | [2, 64×6, 1] | tanh | ~24,700 | ⏳ | ⏳ |
+
 
 
 This result will be updated soon. 
@@ -1001,7 +1003,7 @@ frameworks in structural health monitoring and process control.
 
 ## Author
 
-**Mathew Ahenkora Boateng**
+**Mathew Boateng Ahenkora**
 Prospective Graduate Applicant, Mechanical Engineering
 Undergraduate: Kwame Nkrumah University of Science and Technology (KNUST)
 
@@ -1024,4 +1026,4 @@ equation is from the original PINN paper's supplementary repository.
 
 ---
 
-*Last updated: Novermber 2026 · Status: In Progress*
+*Last updated: Novermber 14, 2026 · Status: In Progress*
