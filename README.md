@@ -1026,4 +1026,4 @@ equation is from the original PINN paper's supplementary repository.
 
 ---
 
-*Last updated: Novermber 14, 2026 · Status: In Progress*
+*Last updated: Novermber 15, 2026 · Status: In Progress*
