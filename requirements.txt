@@ -1,1 +1,8 @@
-To be done soon
+# Tested with DeepXDE 1.15.0 and TensorFlow 2.20.0 / 2.21.0 (Kaggle GPU image: Python 3.13; local CPU: Python 3.11).
+deepxde==1.15.0
+tensorflow>=2.20,<2.22
+tf-keras
+tensorflow-probability
+numpy
+scipy
+matplotlib

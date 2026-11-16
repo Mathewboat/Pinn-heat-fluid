@@ -1,634 +1,100 @@
-# Physics-Informed Neural Networks for Heat Conduction and Fluid Flow
+# Physics-Informed Neural Networks for Heat Conduction and Viscous Flow
 
-[![Python](https://img.shields.io/badge/Python-3.11-blue?logo=python&logoColor=white)](https://www.python.org/)
-[![TensorFlow](https://img.shields.io/badge/TensorFlow-2.15-orange?logo=tensorflow&logoColor=white)](https://www.tensorflow.org/)
-[![DeepXDE](https://img.shields.io/badge/DeepXDE-1.10-green)](https://deepxde.readthedocs.io/)
+### A controlled comparison with classical solvers
+
+[![DeepXDE](https://img.shields.io/badge/DeepXDE-1.15.0-green)](https://deepxde.readthedocs.io/)
+[![TensorFlow](https://img.shields.io/badge/TensorFlow-2.20--2.21-orange)](https://www.tensorflow.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Status](https://img.shields.io/badge/Status-In%20Progress-blueviolet)]()
 
-> **A deep learning framework that embeds thermodynamic and fluid governing equations
-> directly into the neural network training process — complementing
-
-> dense computational meshes while remaining approximately faithful to the underlying physics.**
-
----
-
-## Table of Contents
-- [Overview](#overview)
-- [Scientific Motivation](#scientific-motivation)
-- [Governing Equations](#governing-equations)
-- [Methodology](#methodology)
-- [Project Structure](#project-structure)
-- [Results](#results)
-- [Installation](#installation)
-- [Usage](#usage)
-- [Engineering Applications](#engineering-applications)
-- [Roadmap](#roadmap)
-- [References](#references)
-- [Author](#author)
-
----
-
-## Overview
-
-Classical numerical methods — Finite Difference (FDM), Finite Element (FEM), and
-Finite Volume (FVM) — have been the backbone of computational mechanics for decades.
-They are powerful but carry fundamental limitations: they require structured meshes,
-scale poorly to complex geometries, and must be re-solved entirely when boundary
-conditions or material parameters change.
-
-**Physics-Informed Neural Networks (PINNs)** offer a fundamentally different
-paradigm. Rather than discretizing a domain into a mesh, a neural network learns
-to *satisfy* the governing partial differential equations (PDEs) by incorporating
-the PDE residual directly into its loss function — enforced at every training point
-via automatic differentiation.
-The loss function was not used in these forward problems
-
-This project implements PINNs to solve three problems of increasing complexity:
-
-| Problem | PDE | Domain | Difficulty |
-|---------|-----|--------|------------|
-| 1D Transient Heat Conduction | ∂T/∂t = α ∂²T/∂x² | x ∈ [0,1], t ∈ [0,1] | Baseline |
-| 2D Steady-State Heat Conduction | ∂²T/∂x² + ∂²T/∂y² = −Q | (x,y) ∈ [0,1]² | Intermediate |
-| Burgers' Equation (Viscous Flow) | ∂u/∂t + u∂u/∂x = ν∂²u/∂x² | x ∈ [−1,1], t ∈ [0,0.99] | Advanced |
-
-Each problem is benchmarked against a classical numerical baseline and validated
-against either an analytical solution or a published spectral reference dataset.
-
----
-
-## Scientific Motivation
-
-Heat conduction and viscous fluid flow are foundational to virtually every
-subdomain of mechanical engineering:
-
-- **Thermal management** of electronics, batteries, and aerospace structures
-- **Manufacturing processes** — welding, casting, additive manufacturing
-- **Energy systems** — heat exchangers, turbines, nuclear reactors
-- **Biomedical engineering** — thermal ablation, hyperthermia treatment
-
-The central computational challenge is this: as geometry becomes complex or
-operating conditions change, classical solvers require expensive remeshing and
-full re-computation. A trained PINN, by contrast, can be queried at any point
-in the domain instantaneously — and can be extended to **inverse problems**
-(inferring material properties from sparse measurements) without reformulating
-the entire solver.
-
-This project focuses on the **forward problem**: given known physics, boundary
-conditions, and initial conditions, learn the solution field T(x,t) or u(x,t).
-The inverse problem extension is identified as future work.
-
----
-
-## Governing Equations
-
-### 1. Transient Heat Conduction (1D)
-
-```
-∂T/∂t = α ∂²T/∂x²
-
-Boundary conditions:  T(0, t) = 0,   T(1, t) = 0
-Initial condition:    T(x, 0) = sin(πx)
-Analytical solution:  T(x, t) = exp(−α π² t) · sin(πx)
-
-where α = thermal diffusivity (m²/s) — material dependent
-```
-
-Representative Diffusivities:
-
-| Material | α (m²/s) | Application |
-|----------|-----------|-------------|
-| Copper | 1.17 × 10⁻⁴ | Heat sinks, electronics cooling |
-| Aluminum | 9.70 × 10⁻⁵ | Aerospace, automotive structures |
-| Carbon Steel | 1.17 × 10⁻⁵ | Structural components, manufacturing |
-| Silicon | 8.80 × 10⁻⁵ | Semiconductors, MEMS devices |
-| Concrete | 7.00 × 10⁻⁷ | Thermal energy storage, civil |
-
-Non-dimensionalization: the PINN is trained on the dimensionless system
-with α* = 0.4. Physical results for carbon steel (α = 1.17×10⁻⁵ m²/s)
-are recovered by restoring dimensions:
-
-x_physical = x* × L
-t_physical = t* × t_ref,   t_ref = 0.4 · L² / α_real   (≈ 342 s for steel, L = 0.1 m)
-T_physical = T* × T_ref
-
-### 2. Steady-State Heat Conduction (2D)
-
-```
-∂²T/∂x² + ∂²T/∂y² = −Q(x, y)
-
-Boundary conditions:  T = 0 on all boundaries (Dirichlet)
-Source term:          Q(x,y) = sin(πx) · sin(πy)
-Analytical solution:  T(x,y) = sin(πx) · sin(πy) / (2π²)
-```
-
-### 3. Burgers' Equation (Viscous Flow)
-
-```
-∂u/∂t + u · ∂u/∂x = ν · ∂²u/∂x²
-
-Boundary conditions:  u(−1, t) = u(1, t) = 0
-Initial condition:    u(x, 0)  = −sin(πx)
-Viscosity:            ν = 0.01/π  (shock-forming regime)
-
-Reference solution:   Raissi et al. (2019) spectral dataset
-Reference dataset: `burgers_shock.mat` — high-resolution spectral solution
-from Raissi et al. (2019), obtained from the
-[original paper repository](https://github.com/maziarraissi/PINNs/blob/master/appendix/Data/).
-```
-
-This low-viscosity regime (ν = 0.01/π) generates near-discontinuous shock
-structures — one of the most challenging scenarios for 
-data-driven solvers.
-
----
-
-## Methodology
-
-### PINN Architecture
-
-A feedforward neural network maps spatial and temporal coordinates to the
-solution field:
-
-```
-Input:   (x, t)  or  (x, y)          [2 neurons]
-Hidden:  4 × 64 neurons, tanh         [physics problems require smooth activations]
-Output:  T(x,t)  or  u(x,t)          [1 neuron]
-```
-
-The choice of **tanh** activation is deliberate: ReLU and its variants produce
-zero second derivatives almost everywhere, making the PDE residual computation
-meaningless. Tanh provides the smooth, infinitely differentiable activation
-that PDE-constrained training requires.
-
-### Loss Function
-
-The forward problems in this project are trained on three physics-based terms:
-
-L_total = L_pde + L_bc + L_ic
-
-L_pde = (1/N_c) Σ |∂T/∂t − α ∂²T/∂x²|²     PDE residual at collocation points
-L_bc  = (1/N_b) Σ |T(x_boundary) − T_bc|²   Boundary condition enforcement
-L_ic  = (1/N_i) Σ |T(x, 0) − T_ic(x)|²      Initial condition enforcement
-
-All terms have unit weight. No measurement-data term is used, since these are
-forward problems. A data term L_data (fit to sparse observations) will be added
-for the inverse-problem extension. The 2D problem has no initial-condition term.
-
-
-The PDE residual is computed via **automatic differentiation** (TensorFlow
-GradientTape) — the network output T is differentiated with respect to its
-inputs (x, t) exactly, with no finite difference approximation.
-
-### Training Strategy
-
-Training proceeds in two stages, which is standard practice for PINNs:
-
-```
-Stage 1 — Adam optimizer
-  Learning rate: 1×10⁻³ with exponential decay
-  Iterations:    20,000
-  Purpose:       Rapid initial convergence to solution neighborhood
-
-Stage 2 — L-BFGS-B (quasi-Newton)
-  Purpose:       High-precision convergence, exploits smooth loss landscape
-  
-```
-
-L-BFGS is critical for PINNs: Adam stalls in flat loss regions that L-BFGS
-navigates efficiently by approximating the Hessian of the loss surface.
-
-### Collocation Point Sampling
-
-Interior, boundary and initial-condition points are drawn by DeepXDE's
-built-in sampler (`train_distribution` default: Hammersley).
-Point counts for each experiment are given in the Results tables.
-```
-
----
-
-## Project Structure
-
-```
-
-
-Mathewboat/pinn-heat-fluid/
-│   .gitignore
-│   burgers_test.py
-│   data_validation_test.py
-│   fdm_baselines_corrected.py
-│   LICENSE
-│   make_corrected_figures.py
-│   README.md
-│   requirements.txt
-│   
-├───.vscode
-│       settings.json
-│       
-├───01_heat_1d
-│   │   data_efficiency_study.py
-│   │   heat1d_fdm_baseline.py
-│   │   heat1d_pinn.py
-│   │   
-│   └───results
-│           data_efficiency_v2_results.txt
-│           fdm_heatmap.png
-│           fig_efficiency_corrected.png
-│           fig_fdm_refinement_corrected.png
-│           one
-│           pinn_comparison.png
-│           
-├───02_heat_2d
-│   │   heat2d_fem_baseline.py
-│   │   heat2d_pinn.py
-│   │   
-│   └───results
-│           fig_2d_comparison_corrected.png
-│           heat2d_summary.txt
-│           heat2d_summary_v2.txt
-│           two
-│           
-├───03_burgers
-│   │   burgers_pinn.py
-│   │   burgers_shock.mat
-│   │   
-│   └───results
-│           three
-│           
-├───analysis
-│       summarize_burgers.py
-│       summarize_heat1d.py
-│       
-├───baselines
-│       classical_baselines.py
-│       
-├───deepxde_practice
-│       test_1.py
-│       test_2.py
-│       test_tensorflow.py
-│       
-├───experiments
-│   │   00_env_benchmark.py
-│   │   01_heat1d_recipe.py
-│   │   02_burgers_recipe.py
-│   │   03_poisson2d_recipe.py
-│   │   run_grid.py
-│   │   
-│   └───__pycache__
-│           01_heat1d_recipe.cpython-311.pyc
-│           02_burgers_recipe.cpython-311.pyc
-│           03_poisson2d_recipe.cpython-311.pyc
-│           run_grid.cpython-311.pyc
-│           
-├───kaggle
-├───notebooks
-│       01_exploratory.ipynb
-│       02_visualization.ipynb
-│       
-├───report
-│   │   main.tex
-│   │   
-│   └───figures
-│           rep
-│           
-├───results
-│   │   fdm_baselines_corrected.txt
-│   │   fdm_final_comparison.png
-│   │   fdm_heatmap.png
-│   │   fdm_time_slices.png
-│   │   heat2d_3d_surface.png
-│   │   heat2d_3d_surface_v2.png
-│   │   heat2d_comparison.png
-│   │   heat2d_comparison_v2.png
-│   │   heat2d_error_analysis_v2.png
-│   │   heat2d_loss.png
-│   │   heat2d_model-20779.weights.h5
-│   │   heat2d_model_v2-30916.weights.h5
-│   │   
-│   ├───baselines
-│   │       classical_baselines.json
-│   │       
-│   ├───figures
-│   │       burgers_recipe.png
-│   │       heat1d_recipe_l2.png
-│   │       
-│   ├───kaggle
-│   │   │   notebook-1-2-1.ipynb
-│   │   │   
-│   │   ├───benchmarks
-│   │   │       BENCHMARK.md
-│   │   │       bench_tensorflow_cpu_float32.json
-│   │   │       bench_tensorflow_cpu_float64.json
-│   │   │       bench_tensorflow_gpu_float32.json
-│   │   │       bench_tensorflow_gpu_float32_xlaoff.json
-│   │   │       bench_tensorflow_gpu_float64.json
-│   │   │       bench_tensorflow_gpu_float64_xlaoff.json
-│   │   │       
-│   │   ├───burgers_float64
-│   │   │       burgers_f64_hard_s0.json
-│   │   │       burgers_f64_hard_s1.json
-│   │   │       burgers_f64_hard_s2.json
-│   │   │       
-│   │   ├───burgers_more_seeds
-│   │   │       burgers_f32_hard_s5.json
-│   │   │       burgers_f32_hard_s6.json
-│   │   │       burgers_f32_hard_s7.json
-│   │   │       burgers_f32_hard_s8.json
-│   │   │       burgers_f32_hard_s9.json
-│   │   │       burgers_f32_soft_s5.json
-│   │   │       burgers_f32_soft_s6.json
-│   │   │       burgers_f32_soft_s7.json
-│   │   │       burgers_f32_soft_s8.json
-│   │   │       burgers_f32_soft_s9.json
-│   │   │       
-│   │   ├───burgers_recipe
-│   │   │       burgers_f32_hard_s0.json
-│   │   │       burgers_f32_hard_s1.json
-│   │   │       burgers_f32_hard_s2.json
-│   │   │       burgers_f32_hard_s3.json
-│   │   │       burgers_f32_hard_s4.json
-│   │   │       burgers_f32_soft_w100_s0.json
-│   │   │       burgers_f32_soft_w100_s1.json
-│   │   │       burgers_f32_soft_w100_s2.json
-│   │   │       burgers_f32_soft_w100_s3.json
-│   │   │       burgers_f32_soft_w100_s4.json
-│   │   │       burgers_f32_soft_w1_s0.json
-│   │   │       burgers_f32_soft_w1_s1.json
-│   │   │       burgers_f32_soft_w1_s2.json
-│   │   │       burgers_f32_soft_w1_s3.json
-│   │   │       burgers_f32_soft_w1_s4.json
-│   │   │       
-│   │   ├───heat1d_recipe
-│   │   │       heat1d_float32_hard_s0.json
-│   │   │       heat1d_float32_hard_s1.json
-│   │   │       heat1d_float32_hard_s2.json
-│   │   │       heat1d_float32_hard_s3.json
-│   │   │       heat1d_float32_hard_s4.json
-│   │   │       heat1d_float32_soft_s0.json
-│   │   │       heat1d_float32_soft_s1.json
-│   │   │       heat1d_float32_soft_s2.json
-│   │   │       heat1d_float32_soft_s3.json
-│   │   │       heat1d_float32_soft_s4.json
-│   │   │       heat1d_float64_hard_s0.json
-│   │   │       heat1d_float64_hard_s1.json
-│   │   │       heat1d_float64_hard_s2.json
-│   │   │       heat1d_float64_hard_s3.json
-│   │   │       heat1d_float64_hard_s4.json
-│   │   │       heat1d_float64_soft_s0.json
-│   │   │       heat1d_float64_soft_s1.json
-│   │   │       heat1d_float64_soft_s2.json
-│   │   │       heat1d_float64_soft_s3.json
-│   │   │       heat1d_float64_soft_s4.json
-│   │   │       
-│   │   ├───heat1d_weights
-│   │   │   │   heat1d_f32_hard_s0.json
-│   │   │   │   heat1d_f32_hard_s1.json
-│   │   │   │   heat1d_f32_hard_s2.json
-│   │   │   │   heat1d_f32_hard_s3.json
-│   │   │   │   heat1d_f32_hard_s4.json
-│   │   │   │   heat1d_f32_soft_w1000_s0.json
-│   │   │   │   heat1d_f32_soft_w1000_s1.json
-│   │   │   │   heat1d_f32_soft_w1000_s2.json
-│   │   │   │   heat1d_f32_soft_w1000_s3.json
-│   │   │   │   heat1d_f32_soft_w1000_s4.json
-│   │   │   │   heat1d_f32_soft_w100_s0.json
-│   │   │   │   heat1d_f32_soft_w100_s1.json
-│   │   │   │   heat1d_f32_soft_w100_s2.json
-│   │   │   │   heat1d_f32_soft_w100_s3.json
-│   │   │   │   heat1d_f32_soft_w100_s4.json
-│   │   │   │   heat1d_f32_soft_w10_s0.json
-│   │   │   │   heat1d_f32_soft_w10_s1.json
-│   │   │   │   heat1d_f32_soft_w10_s2.json
-│   │   │   │   heat1d_f32_soft_w10_s3.json
-│   │   │   │   heat1d_f32_soft_w10_s4.json
-│   │   │   │   heat1d_f32_soft_w1_s0.json
-│   │   │   │   heat1d_f32_soft_w1_s1.json
-│   │   │   │   heat1d_f32_soft_w1_s2.json
-│   │   │   │   heat1d_f32_soft_w1_s3.json
-│   │   │   │   heat1d_f32_soft_w1_s4.json
-│   │   │   │   
-│   │   │   └───repro_check
-│   │   │           heat1d_f32_hard_s0_repeat.json
-│   │   │           
-│   │   └───poisson2d_recipe
-│   │           poisson2d_f32_hard_raw_s0.json
-│   │           poisson2d_f32_hard_raw_s1.json
-│   │           poisson2d_f32_hard_raw_s2.json
-│   │           poisson2d_f32_hard_raw_s3.json
-│   │           poisson2d_f32_hard_raw_s4.json
-│   │           poisson2d_f32_hard_raw_s5.json
-│   │           poisson2d_f32_hard_raw_s6.json
-│   │           poisson2d_f32_hard_raw_s7.json
-│   │           poisson2d_f32_hard_raw_s8.json
-│   │           poisson2d_f32_hard_raw_s9.json
-│   │           poisson2d_f32_hard_rescaled_s0.json
-│   │           poisson2d_f32_hard_rescaled_s1.json
-│   │           poisson2d_f32_hard_rescaled_s2.json
-│   │           poisson2d_f32_hard_rescaled_s3.json
-│   │           poisson2d_f32_hard_rescaled_s4.json
-│   │           poisson2d_f32_hard_rescaled_s5.json
-│   │           poisson2d_f32_hard_rescaled_s6.json
-│   │           poisson2d_f32_hard_rescaled_s7.json
-│   │           poisson2d_f32_hard_rescaled_s8.json
-│   │           poisson2d_f32_hard_rescaled_s9.json
-│   │           poisson2d_f32_soft_raw_s0.json
-│   │           poisson2d_f32_soft_raw_s1.json
-│   │           poisson2d_f32_soft_raw_s2.json
-│   │           poisson2d_f32_soft_raw_s3.json
-│   │           poisson2d_f32_soft_raw_s4.json
-│   │           poisson2d_f32_soft_raw_s5.json
-│   │           poisson2d_f32_soft_raw_s6.json
-│   │           poisson2d_f32_soft_raw_s7.json
-│   │           poisson2d_f32_soft_raw_s8.json
-│   │           poisson2d_f32_soft_raw_s9.json
-│   │           poisson2d_f32_soft_rescaled_s0.json
-│   │           poisson2d_f32_soft_rescaled_s1.json
-│   │           poisson2d_f32_soft_rescaled_s2.json
-│   │           poisson2d_f32_soft_rescaled_s3.json
-│   │           poisson2d_f32_soft_rescaled_s4.json
-│   │           poisson2d_f32_soft_rescaled_s5.json
-│   │           poisson2d_f32_soft_rescaled_s6.json
-│   │           poisson2d_f32_soft_rescaled_s7.json
-│   │           poisson2d_f32_soft_rescaled_s8.json
-│   │           poisson2d_f32_soft_rescaled_s9.json
-│   │           
-│   └───tables
-│           burgers_experiments.md
-│           heat1d_experiments.md
-│           
-└───utils
-        metrics.py
-        plotting.py
-
-
-
-
-
-
-
----
-
-## Results
-
-> **Note:** This project is actively in progress. Results will be updated
-> as each phase completes. Current status: FDM baseline complete ✓,
-> PINN training in progress.
-
-### FDM Baseline — 1D Heat Equation
-
-The classical FDM solver establishes the benchmark this project aims to compare
-with significantly fewer computational points on only CPU performance.
-
-**Grid Refinement Study** — confirms second-order spatial accuracy of the
-FDM baseline, as expected for central difference discretization:
-
-**Grid refinement study** (explicit FDM, error over all nodes and time steps):
-
-| nx | Space-time points | L2 relative error |
-|----|-------------------|-------------------|
-| 20 | 7,260 | 2.25×10⁻³ |
-| 50 | 120,150 | 3.37×10⁻⁴ |
-| 100 | 980,200 | 8.25×10⁻⁵ |
-| 200 | 7,920,400 | 2.04×10⁻⁵ |
-| 500 | 124,501,500 | 3.25×10⁻⁶ |
-
-Error falls about 4× per doubling of nx (observed order ≈ 2), as expected
-for central differences.
-
-**FDM Solution — Temperature Field T(x,t):**
-![FDM Heatmap](01_heat_1d/results/fdm_heatmap.png)
-
-
-
-
-### Key Result — Data Efficiency of PINNs vs Classical FDM
-
-> **Research question:** How many physics-constrained training points does a
-> PINN need to match the accuracy of a classical finite difference solver
-> that uses orders of magnitude more grid points?
-
-### Key Result — Data Efficiency of PINNs vs Classical FDM
-
-### Problem 1: 1D Transient Heat Conduction
-
-| Method | Space-time points | L2 relative error |
-|--------|-------------------|-------------------|
-| PINN, N=50 (3-seed mean) | 150 | 4.86×10⁻⁴ |
-| PINN, N=100 | 200 | 4.69×10⁻⁴ |
-| PINN, N=250 | 350 | 4.40×10⁻⁴ |
-| PINN, N=500 | 700 | 4.47×10⁻⁴ |
-| PINN, N=1000 | 1,400 | 4.04×10⁻⁴ |
-| **PINN, N=2500** | **3,500** | **2.97×10⁻⁴** |
-| FDM, nx=20 | 7,260 | 2.25×10⁻³ |
-| **FDM, nx=50** | **120,150** | **3.37×10⁻⁴** |
-| FDM, nx=100 | 980,200 | 8.25×10⁻⁵ |
-| FDM, nx=200 | 7,920,400 | 2.04×10⁻⁵ |
-
- Differences among PINN runs from N=50 to N=1000
-are within one standard deviation across seeds. FDM is far cheaper in
-wall-clock time here (about 0.12 s versus about 17 min of PINN training).
-
-![1D efficiency](01_heat_1d/results/fig_efficiency_corrected.png)
-
-- Figures and summary files built on the old baselines were removed; baseline-dependent
-  figures were regenerated by `make_corrected_figures.py`.
-
-### Results by Problem
-
-Single run (unseeded single run, 4×64 tanh, 20k Adam + L-BFGS, 2,900 points):
-L2 = 1.55×10⁻⁴, L∞ = 3.53×10⁻⁴, 714 s on CPU.
-
-FDM is faster for simple 1D cases. Further info will be added after running with kaggle
-
-
-
-
-### Experiment 1: training-recipe ablation (1D transient heat, 5 seeds per setting)
-
-4×64 tanh network, 2,500 collocation points, 20,000 Adam iterations (lr 1e-3), then L-BFGS capped
-at 3,000 iterations; XLA off; Kaggle 2×T4, TensorFlow 2.20, DeepXDE 1.15. "Soft" = BC/IC as loss
-terms (200+200 points, weight 1). "Hard" = enforced exactly: u = sin(πx) + x(1−x)·t·N(x,t).
-
-| Precision | BC/IC | L2 median [min, max] | wall-flux L2 | stored-energy L2 | L-BFGS its (median) | stopped before cap | min/run* |
-|---|---|---|---|---|---|---|---|
-| float32 | soft | 3.0e-4 [2.7e-4, 4.3e-4] | 7.5e-4 | 1.7e-4 | 449 | 5/5 | 7.4 |
-| float32 | hard | 1.6e-5 [9.6e-6, 2.3e-5] | 4.0e-5 | 8.6e-6 | 378 | 5/5 | 7.1 |
-| float64 | soft | 4.8e-5 [2.6e-5, 1.0e-4] | 1.6e-4 | 3.0e-5 | 3000 | 0/5 | 37.6 |
-| float64 | hard | 1.6e-6 [9.3e-7, 3.1e-6] | 5.1e-6 | 8.8e-7 | 3000 | 0/5 | 31.6 |
-
-*Four jobs shared two GPUs, so times overstate single-job cost; use them only for comparison.
-Caveats: soft-constraint loss weights were not tuned; float64 runs hit the L-BFGS cap; the hard
-constraint embeds the exact initial profile, so gains may be smaller on other problems.
-
-- Seeds did not control network initialization in runs before Experiment 1b: DeepXDE's
-  `set_random_seed` does not affect the "Glorot uniform" string initializer under TensorFlow 2 /
-  Keras 3. Earlier "seeded" runs are independent random replicates, not reproducible per seed.
-  `experiments/01_heat1d_recipe.py` now uses a seeded initializer; results from Experiment 1b on
-  reproduce on CPU (identical to 10 digits in testing) and approximately on GPU.
-
-
-**Findings (1D heat, float32, 5 reproducible runs per setting).** Exact enforcement of BC/IC gave
-median L2 1.2e-5, about 20x lower than the best of four BC/IC loss weights (w=100: 2.3e-4); every hard
-run beat every soft run. Weights 10-100 gave medians ~1.7x lower than weight 1 with a tighter spread, but
-the run-to-run ranges overlap with weight 1, so the improvement is not established with 5 runs; weight
-1000 was worse. L-BFGS stopped before its 3,000-iteration cap in all 25 runs (median 234-366 its).
-A full-length GPU run reproduced exactly. Limitations: coarse weight search; the hard constraint embeds
-the exact initial profile; one problem, one network size; float64 results (Experiment 1a) used an
-unseeded initializer and only soft weight 1.
-
-Raw data from running baselines\classical_baselines.py and analysis\summarise_heat1d.py
-
-1D heat, explicit Euler (stability-limited)
-| nx | space-time points | L2 | seconds |
-|---|---|---|---|
-| 20 | 7,260 | 2.25e-03 | 0.010 |
-| 50 | 120,150 | 3.37e-04 | 0.066 |
-| 100 | 980,200 | 8.25e-05 | 0.282 |
-| 200 | 7,920,400 | 2.04e-05 | 1.272 |
-
-1D heat, Crank-Nicolson (dt = dx)
-| nx | space-time points | L2 | seconds |
-|---|---|---|---|
-| 21 | 441 | 9.26e-04 | 0.011 |
-| 41 | 1,681 | 2.20e-04 | 0.003 |
-| 81 | 6,561 | 5.36e-05 | 0.006 |
-| 161 | 25,921 | 1.32e-05 | 0.007 |
-| 321 | 103,041 | 3.29e-06 | 0.018 |
-| 641 | 410,881 | 8.19e-07 | 0.042 |
-
-2D Poisson, direct sparse solve
-| n | points | L2 | seconds |
-|---|---|---|---|
-| 20 | 400 | 2.28e-03 | 0.001 |
-| 50 | 2,500 | 3.43e-04 | 0.009 |
-| 100 | 10,000 | 8.39e-05 | 0.045 |
-| 200 | 40,000 | 2.08e-05 | 0.264 |
-
-Burgers, central FD + BDF vs reference
-| grid points | cell Peclet | L2 | L2 near shock | seconds |
-|---|---|---|---|---|
-| 256 | 2.46 | 6.39e-03 | 1.50e-02 | 0.130 |
-| 511 | 1.23 | 1.65e-03 | 3.87e-03 | 0.138 |
-| 1,021 | 0.62 | 4.08e-04 | 9.57e-04 | 0.188 |
-| 2,041 | 0.31 | 1.02e-04 | 2.38e-04 | 0.545 |
-
-Reference file vs exact Cole-Hopf solution (9 time levels): relative L2 = 4.55e-06, max abs diff = 4.03e-05
-
-Saved C:\kwame\Programming stuff\github project\github project\Pinn-heat-fluid\results\baselines\classical_baselines.json
-## Experiment 1 summary (generated by analysis/summarize_heat1d.py)
-
-Runs found: 1a = 20 (unseeded initialization), 1b = 25 (seeded initialization).
-
-### Experiment 1a: precision x BC/IC enforcement (independent runs; initialization not seeded)
-
-| precision | BC/IC | bc weight | n | L2 median [min, max] | wall-flux L2 | stored-energy L2 | L-BFGS its (median) | stopped before cap | min/run |
-|---|---|---|---|---|---|---|---|---|---|
-| float32 | hard | - | 5 | 1.63e-05 [9.56e-06, 2.32e-05] | 4.04e-05 | 8.58e-06 | 378 | 5/5 | 7.1 |
-| float32 | soft | 1 | 5 | 2.99e-04 [2.72e-04, 4.27e-04] | 7.47e-04 | 1.71e-04 | 449 | 5/5 | 7.4 |
-| float64 | hard | - | 5 | 1.62e-06 [9.34e-07, 3.11e-06] | 5.07e-06 | 8.83e-07 | 3000 | 0/5 | 31.6 |
-| float64 | soft | 1 | 5 | 4.81e-05 [2.58e-05, 1.02e-04] | 1.56e-04 | 3.03e-05 | 3000 | 0/5 | 37.6 |
-
-### Experiment 1b: float32, BC/IC loss weights vs exact enforcement (reproducible seeds 0-4)
+## Summary
+
+This repository is a reproducible study of **what actually drives the accuracy of physics-informed neural networks (PINNs)**
+on three PDEs from heat transfer and fluid mechanics, benchmarked against strong classical solvers. It contains
+**113 GPU training runs** (5-10 independent runs per setting), the code, the raw per-run results, and an explicit record of
+the mistakes made along the way ([Corrections log](#corrections-log)).
+
+| problem | PDE | reference solution |
+|---|---|---|
+| 1D transient heat conduction | u_t = 0.4 u_xx on [0,1]^2, homogeneous Dirichlet, u(x,0) = sin(pi x) | analytical |
+| Viscous Burgers' equation, shock-forming regime | u_t + u u_x = nu u_xx, nu = 0.01/pi, x in [-1,1], t in [0,0.99] | spectral reference data, verified against the exact Cole-Hopf solution |
+| 2D Poisson (steady conduction with a source) | -(T_xx + T_yy) = sin(pi x) sin(pi y) on the unit square, T = 0 on the boundary | analytical |
+
+## Key findings
+
+1. **The effect of a training-recipe choice depends strongly on the problem.** Enforcing the boundary/initial conditions exactly
+   ("hard" constraints, built into the network output) lowered the median error by about **20x on 1D heat** and by about
+   **340-550x on 2D Poisson** (where rescaling the field to O(1) gave a further 7-12x), but had **no detectable effect on the
+   Burgers shock problem** (10 runs per setting, rank-test p = 0.12-0.53).
+2. **Classical solvers are far cheaper.** The best PINN settings reach high accuracy per collocation point, but need roughly
+   two to five orders of magnitude more wall-clock time than Crank-Nicolson, direct sparse solves or finite differences for
+   equal accuracy (figure below).
+3. **Early conclusions that did not survive scrutiny were corrected, not kept**: a "34x fewer points than finite differences"
+   claim (it used a stability-limited explicit baseline), a 5-run Burgers advantage for hard constraints (it vanished at 10 runs),
+   and an early 2D result that understated what PINNs can reach (the recipe, not the method, was the problem).
+4. **A seeding pitfall was found and fixed.** With TensorFlow 2 / Keras 3, DeepXDE's `set_random_seed` does not control the network's
+   weight initialization, so runs with the same seed started from different networks. A seeded initializer is used from Experiment 1b
+   onward, and a full-length GPU run was verified to reproduce bit-exactly.
+5. **Scope and limits are stated explicitly** ([Limitations](#limitations)): one network family (tanh MLP), mostly float32, simple
+   geometries, and problems with analytical or verified reference solutions.
+
+### Accuracy versus cost
+
+![Accuracy versus cost](results/figures/cost_vs_accuracy.png)
+
+*Dots: individual PINN runs (soft constraints red/orange, hard constraints green/blue). Lines: classical solvers, labelled with grid
+size. PINN seconds are per run on a Kaggle T4 GPU with four jobs sharing two GPUs; classical seconds are single-process CPU timings
+on the author's machine, so read the horizontal gap as an order of magnitude, not a precise ratio.*
+
+## Methods
+
+**PINN setup.** Fully connected tanh networks (4x64 for heat and Poisson, 8x20 for Burgers) with Glorot-uniform initialization (a
+seeded initializer, see Key finding 4). The PDE residual is computed by automatic differentiation. *Soft* constraints add
+boundary/initial terms to the loss; *hard* constraints build them into the output: heat `u = sin(pi x) + x(1-x) t N(x,t)`, Poisson
+`u = x(1-x) y(1-y) N(x,y)`, Burgers `u = -sin(pi x) + t(1-x^2) N(x,t)`. Training is 20,000 Adam iterations (learning rate 1e-3)
+followed by L-BFGS capped at 3,000 iterations; float32 unless stated. Collocation points: heat 2,500 (+200 boundary, +200 initial for
+soft), Burgers 10,000 (+200/+400 for soft), Poisson 2,500 (+400 boundary for soft), drawn by DeepXDE's default sampler.
+
+**Metrics** (all relative to the reference solution): whole-domain relative L2; relative L-infinity (2D); engineering quantities
+(wall heat flux and stored energy for heat; total boundary heat rate and edge heat flux for Poisson); and a near-shock L2 over
+|x| <= 0.15, t >= 0.35 (Burgers).
+
+**Statistics.** 5-10 independent runs per setting. Tables give medians with [min, max]; comparisons use exact two-sided
+Mann-Whitney tests. With 5 vs 5 runs the smallest possible p is 0.0079 and with 10 vs 10 it is 1.1e-5; comparisons are not
+adjusted for multiplicity, so p-values are rank statements, not precise probabilities.
+
+**Reference data.** The Burgers reference (`03_burgers/burgers_shock.mat`, from Raissi et al. 2019) was checked against the exact
+Cole-Hopf solution: relative L2 4.55e-06, maximum absolute difference 4.03e-05 on 9 time levels
+(`baselines/classical_baselines.py`).
+
+## Classical baselines
+
+Measured on the author's machine by `baselines/classical_baselines.py` (numpy/scipy only, a few seconds in total). Whole-domain
+errors use the same metric as the PINN runs.
+
+| problem | solver | grid | points | relative L2 | seconds |
+|---|---|---|---|---|---|
+| 1D heat | explicit Euler (stability-limited) | nx = 50 | 120,150 | 3.37e-04 | 0.066 |
+| 1D heat | explicit Euler | nx = 200 | 7,920,400 | 2.04e-05 | 1.272 |
+| 1D heat | Crank-Nicolson (dt = dx) | nx = 41 | 1,681 | 2.20e-04 | 0.003 |
+| 1D heat | Crank-Nicolson | nx = 161 | 25,921 | 1.32e-05 | 0.007 |
+| 1D heat | Crank-Nicolson | nx = 641 | 410,881 | 8.19e-07 | 0.042 |
+| Burgers | central FD + BDF (rtol 1e-8) | 1,021 points | 1,021 | 4.08e-04 (near-shock 9.57e-04) | 0.19 |
+| Burgers | central FD + BDF | 2,041 points | 2,041 | 1.02e-04 (near-shock 2.38e-04) | 0.54 |
+| 2D Poisson | 2nd-order FD, direct sparse solve | n = 100 | 10,000 | 8.39e-05 | 0.045 |
+| 2D Poisson | 2nd-order FD, direct sparse solve | n = 200 | 40,000 | 2.08e-05 | 0.264 |
+
+Explicit Euler is a deliberately naive baseline: its stability limit (dt ~ dx^2) inflates its cost, so the comparison that matters
+for 1D heat is Crank-Nicolson. Full tables: `results/baselines/classical_baselines.json`.
+
+## Experiment 1: 1D transient heat conduction
+
+Two grids of runs (45 in total). **1a** (20 runs) crossed float32/float64 with soft/hard constraints, 5 runs each;
+initialization was not seeded (see Corrections log). **1b** (25 runs, reproducible seeds) is float32 only and compares hard
+constraints with BC/IC loss weights of 1, 10, 100 and 1000.
+
+![1D heat: every run](results/figures/heat1d_recipe_l2.png)
+
+**Experiment 1b** (float32, reproducible seeds 0-4):
 
 | precision | BC/IC | bc weight | n | L2 median [min, max] | wall-flux L2 | stored-energy L2 | L-BFGS its (median) | stopped before cap | min/run |
 |---|---|---|---|---|---|---|---|---|---|
@@ -638,14 +104,42 @@ Runs found: 1a = 20 (unseeded initialization), 1b = 25 (seeded initialization).
 | float32 | soft | 100 | 5 | 2.25e-04 [1.87e-04, 3.66e-04] | 6.94e-04 | 1.38e-04 | 330 | 5/5 | 6.2 |
 | float32 | soft | 1000 | 5 | 1.05e-03 [2.67e-04, 1.55e-03] | 1.93e-03 | 7.25e-04 | 234 | 5/5 | 5.8 |
 
-### Pooled float32 replicates (1a + 1b, same recipe)
+**Experiment 1a** (independent runs, initialization not seeded):
+
+| precision | BC/IC | bc weight | n | L2 median [min, max] | wall-flux L2 | stored-energy L2 | L-BFGS its (median) | stopped before cap | min/run |
+|---|---|---|---|---|---|---|---|---|---|
+| float32 | hard | - | 5 | 1.63e-05 [9.56e-06, 2.32e-05] | 4.04e-05 | 8.58e-06 | 378 | 5/5 | 7.1 |
+| float32 | soft | 1 | 5 | 2.99e-04 [2.72e-04, 4.27e-04] | 7.47e-04 | 1.71e-04 | 449 | 5/5 | 7.4 |
+| float64 | hard | - | 5 | 1.62e-06 [9.34e-07, 3.11e-06] | 5.07e-06 | 8.83e-07 | 3000 | 0/5 | 31.6 |
+| float64 | soft | 1 | 5 | 4.81e-05 [2.58e-05, 1.02e-04] | 1.56e-04 | 3.03e-05 | 3000 | 0/5 | 37.6 |
+
+**Findings.**
+- Exact enforcement of the boundary/initial conditions gave a median L2 of 1.2e-5, about **20x lower than the best of four BC/IC
+  loss weights** (weight 100: 2.3e-4); every hard run beat every soft run (exact rank test p = 0.0079, the minimum with 5 vs 5).
+  Pooling the 10 float32 runs per setting from 1a and 1b gives 3.3e-4 (soft, weight 1) vs 1.3e-5 (hard), about 26x.
+- Loss weights 10-100 gave medians about 1.7x lower than weight 1 with a tighter spread, but the ranges overlap with weight 1, so with
+  5 runs this is not established; weight 1000 was worse.
+- Float64 (1a): hard-constraint median 1.6e-6 vs 1.6e-5 in float32 (about 10x); soft 4.8e-5 vs 3.0e-4 (about 6x). All float64 runs hit
+  the 3,000-iteration L-BFGS cap, so they may be limited by the cap, and they took about 32-38 min each vs 5-7 min in float32.
+  L-BFGS stopped before its cap in every float32 run (medians 234-449 iterations).
+- Wall heat-flux error was about 2.5-3x the field error and stored-energy error about 0.5-0.8x: gradients are less accurate than
+  values, and integrals more accurate.
+- A full-length GPU run (float32, hard, seed 0) was repeated and reproduced exactly (L2 = 1.3887155727e-5 both times).
+
+**Caveat.** The hard-constraint form embeds the exact initial profile sin(pi x), which is also the spatial shape of the solution, so
+the 20x gain probably overstates what generic problems would show (see Experiments 2 and 3).
+
+<details>
+<summary>Pooled replicates and comparisons (generated tables)</summary>
+
+Pooled float32 replicates (1a + 1b, same recipe, different initialization stream):
 
 | setting | n | L2 median [min, max] |
 |---|---|---|
 | float32 soft, weight 1 | 10 | 3.33e-04 [1.38e-04, 7.75e-04] |
 | float32 hard | 10 | 1.28e-05 [9.56e-06, 3.66e-05] |
 
-### Hard constraints vs each soft weight (Experiment 1b, n = 5 vs 5)
+Hard constraints vs each soft weight (Experiment 1b, 5 vs 5):
 
 | comparison | ratio of medians (soft/hard) | worst hard / best soft | exact two-sided Mann-Whitney p |
 |---|---|---|---|
@@ -654,71 +148,59 @@ Runs found: 1a = 20 (unseeded initialization), 1b = 25 (seeded initialization).
 | soft w=100 vs hard | 19.5x | 0.20 | 0.0079 |
 | soft w=1000 vs hard | 91.2x | 0.14 | 0.0079 |
 
-Note: with 5 vs 5 runs and completely separated ranges the smallest possible two-sided p is 0.0079; four comparisons were made, so treat it as a rank statement, not a precise probability.
+</details>
 
+## Experiment 2: Burgers' equation (shock formation)
 
+8x20 tanh network, 10,000 collocation points. 28 runs: float32 soft (weight 1: 10 runs, weight 100: 5), float32 hard (10),
+float64 hard (3).
 
-
-
-
-
-## Burgers experiments summary (generated by analysis/summarize_burgers.py)
-
-15 runs. Metrics are on the 256 x 100 reference grid; near-shock = |x| <= 0.15, t >= 0.35.
+![Burgers: every run](results/figures/burgers_recipe.png)
 
 | setting | n | L2 median [min, max] | near-shock L2 median [min, max] | Linf median [min, max] | L-BFGS its (median) | stopped before cap | min/run |
 |---|---|---|---|---|---|---|---|
-| 32 soft w=1 | 5 | 9.98e-04 [2.88e-04, 1.12e-03] | 2.11e-03 [4.11e-04, 2.35e-03] | 1.04e-02 [2.17e-03, 1.22e-02] | 792 | 5/5 | 12.4 |
-| 32 soft w=100 | 5 | 1.66e-03 [6.36e-04, 1.78e-03] | 2.94e-03 [5.19e-04, 3.57e-03] | 1.67e-02 [2.97e-03, 1.92e-02] | 1698 | 5/5 | 16.8 |
-| 32 hard | 5 | 5.03e-04 [2.57e-04, 6.52e-04] | 4.63e-04 [3.35e-04, 5.24e-04] | 2.87e-03 [1.89e-03, 2.96e-03] | 1343 | 5/5 | 16.6 |
+| f32 soft w=1 | 10 | 4.74e-04 [2.88e-04, 1.12e-03] | 5.17e-04 [2.64e-04, 2.35e-03] | 2.82e-03 [1.68e-03, 1.22e-02] | 1063 | 10/10 | 14.7 |
+| f32 soft w=100 | 5 | 1.66e-03 [6.36e-04, 1.78e-03] | 2.94e-03 [5.19e-04, 3.57e-03] | 1.67e-02 [2.97e-03, 1.92e-02] | 1698 | 5/5 | 16.8 |
+| f32 hard | 10 | 4.68e-04 [2.57e-04, 6.79e-04] | 4.34e-04 [2.09e-04, 8.62e-04] | 2.48e-03 [1.24e-03, 4.42e-03] | 1415 | 10/10 | 17.2 |
+| f64 hard | 3 | 2.86e-04 [1.51e-04, 3.27e-04] | 3.64e-04 [2.21e-04, 3.98e-04] | 2.39e-03 [1.63e-03, 2.41e-03] | 3000 | 0/3 | 45.8 |
 
-### Each setting vs float32 soft w=1 (exact two-sided Mann-Whitney p; ratio = reference median / setting median)
+**Findings.**
+- In float32, hard and soft (weight 1) enforcement were **indistinguishable with 10 runs each**: median whole-grid L2 4.7e-4 vs 4.7e-4
+  and near-shock L2 4.3e-4 vs 5.2e-4 (exact rank test p = 0.53 and 0.12). 9 of 10 hard and 6 of 10 soft runs captured the shock
+  (near-shock L2 below 7e-4; Fisher exact p = 0.30).
+- An earlier 5-run comparison suggested a 4.6x near-shock advantage for hard constraints; it disappeared when 5 more runs were added.
+  The two batches ran under different TensorFlow versions (2.20.0 and 2.21.0), so chance and version effects cannot be separated.
+- IC/BC loss weight 100 was worse than weight 1 (p = 0.02-0.04, 5 vs 10 runs).
+- Run-to-run failures were associated with early L-BFGS stops (Spearman rho = -0.66 between L-BFGS iterations and near-shock error
+  across the 20 float32 weight-1 runs).
+- Float64 with hard constraints (3 runs; all hit the L-BFGS cap; about 46 min each) gave median L2 2.9e-4, about 1.6x lower than
+  float32 hard; with n = 3 this is preliminary.
+- A classical central finite-difference solver reaches L2 4.1e-4 with 1,021 grid points in 0.19 s; typical PINN runs are comparable
+  to a solver of roughly 1,000-1,500 points, at 10^3-10^4 times the compute.
+
+<details>
+<summary>Comparisons against float32 soft, weight 1 (generated table)</summary>
 
 | setting | metric | ratio of medians | worst run of setting vs best run of reference | p |
 |---|---|---|---|---|
-| 32 soft w=100 | L2 | 0.60x | 6.19 | 0.2222 |
-| 32 soft w=100 | near-shock L2 | 0.72x | 8.68 | 0.2222 |
-| 32 soft w=100 | Linf | 0.62x | 8.85 | 0.2222 |
-| 32 hard | L2 | 1.98x | 2.26 | 0.4206 |
-| 32 hard | near-shock L2 | 4.55x | 1.27 | 0.2222 |
-| 32 hard | Linf | 3.61x | 1.36 | 0.2222 |
+| f32 soft w=100 | L2 | 0.29x | 6.19 | 0.0193 |
+| f32 soft w=100 | near-shock L2 | 0.18x | 13.51 | 0.0400 |
+| f32 soft w=100 | Linf | 0.17x | 11.48 | 0.0400 |
+| f32 hard | L2 | 1.01x | 2.36 | 0.5288 |
+| f32 hard | near-shock L2 | 1.19x | 3.26 | 0.1230 |
+| f32 hard | Linf | 1.14x | 2.64 | 0.1431 |
+| f64 hard | L2 | 1.66x | 1.13 | 0.0280 |
+| f64 hard | near-shock L2 | 1.42x | 1.51 | 0.0280 |
+| f64 hard | Linf | 1.18x | 1.44 | 0.1608 |
 
-'worst/best' below 1 means every run of the setting beat every reference run. With 5 vs 5 the smallest possible p is 0.0079; several comparisons are made, so read p as a rank statement only.
+</details>
 
-### Classical central finite differences + BDF (same metrics, from results/baselines)
+## Experiment 3: 2D Poisson equation
 
-| grid points | L2 | near-shock L2 | seconds |
-|---|---|---|---|
-| 256 | 6.39e-03 | 1.50e-02 | 0.13 |
-| 511 | 1.65e-03 | 3.87e-03 | 0.14 |
-| 1,021 | 4.08e-04 | 9.57e-04 | 0.19 |
-| 2,041 | 1.02e-04 | 2.38e-04 | 0.54 |
+4x64 tanh network, 2,500 collocation points (soft adds 400 boundary points), float32, **10 runs per setting, all 40 runs in one
+session**. "Raw" learns T (peak 0.051); "rescaled" learns 2*pi^2*T (peak 1). "Hard": `u = x(1-x) y(1-y) N`.
 
-
-
-**Findings (Burgers, 8x20 tanh network, 10,000 collocation points, L-BFGS cap 3,000).** In float32,
-hard and soft (weight 1) enforcement of the IC/BC were indistinguishable with 10 runs each: median
-whole-grid L2 4.7e-4 vs 4.7e-4, near-shock L2 4.3e-4 vs 5.2e-4 (exact rank test p = 0.53 and 0.12);
-9/10 hard and 6/10 soft runs captured the shock (Fisher p = 0.30). An earlier 5-run comparison had
-suggested a 4.6x near-shock advantage for hard constraints; it disappeared when 5 more runs were added.
-The two batches ran under different TensorFlow versions (2.20.0 and 2.21.0), so chance and version
-effects cannot be separated. IC/BC loss weight 100 was worse than weight 1 (p = 0.02-0.04, n = 5 vs 10).
-Run-to-run failures were associated with early L-BFGS stops (Spearman rho = -0.66 between L-BFGS
-iterations and near-shock error, n = 20). Float64 with hard constraints (3 runs, all hit the L-BFGS cap,
-38-50 min each) gave median L2 2.9e-4, about 1.6x lower than float32 hard; with n = 3 this is
-preliminary. A classical central finite-difference solver reaches L2 4.1e-4 with 1,021 grid points in
-0.2 s; the best PINN runs are comparable to a ~1,000-1,500-point solver at 10^3-10^4 times the compute.
-
-
-
-#### Problem 2 — 2D Steady-State Heat Conduction
-
-### Problem 2: 2D Steady-State Heat Conduction
-
-
-## 2D Poisson experiments summary (generated by analysis/summarize_poisson2d.py)
-
-40 runs. u = SCALE*T; 'raw' SCALE = 1, 'rescaled' SCALE = 2 pi^2. All errors relative to the exact solution; rel. Linf = Linf / exact peak.
+![2D Poisson: every run](results/figures/poisson2d_recipe.png)
 
 | setting | n | L2 median [min, max] | rel. Linf (median) | wall-flux L2 (median) | total-heat error (median) | L-BFGS its (median) | stopped before cap | min/run |
 |---|---|---|---|---|---|---|---|---|
@@ -727,7 +209,20 @@ preliminary. A classical central finite-difference solver reaches L2 4.1e-4 with
 | f32 hard raw | 10 | 1.17e-05 [6.82e-06, 1.71e-05] | 1.73e-05 | 4.87e-05 | 7.75e-06 | 151 | 10/10 | 4.9 |
 | f32 hard rescaled | 10 | 9.84e-07 [7.22e-07, 1.26e-06] | 1.74e-06 | 7.89e-06 | 7.30e-07 | 405 | 10/10 | 7.1 |
 
-### Pairwise comparisons (float32). ratio = first median / second median; 'separated' = every run of the better setting beats every run of the other; p = exact two-sided Mann-Whitney
+**Findings.**
+- Exact enforcement of the boundary condition lowered the median field L2 by about **340x (raw) and 550x (rescaled)**; every hard
+  run beat every soft run. Wall heat-flux error fell by similar factors (about 290x and 460x).
+- Rescaling lowered median L2 by about **7x (soft) and 12x (hard)**; for hard the ranges are fully separated.
+- The best recipe (hard, rescaled; median L2 9.8e-7) is about **4,000x better than the baseline recipe** (soft, raw; 3.9e-3). The
+  soft/raw median reproduces the early single-run result (3.8e-3).
+- Against a classical second-order finite-difference solver (direct solve), the best PINN is about 20x more accurate than a
+  40,000-point grid, but the classical solver needs seconds (extrapolating the h^2 law, about 8x10^5 points for the same error)
+  and the PINN about 7 GPU-minutes; the exact solution is a single sine mode, so a spectral method would be near-exact.
+- L-BFGS stopped before its cap in all 40 runs; in two of four settings (soft/raw, hard/rescaled) runs with more L-BFGS iterations had
+  lower error (Spearman -0.94 and -0.85).
+
+<details>
+<summary>Pairwise comparisons (generated table)</summary>
 
 | first | second | metric | ratio of medians | separated? | p |
 |---|---|---|---|---|---|
@@ -748,282 +243,184 @@ preliminary. A classical central finite-difference solver reaches L2 4.1e-4 with
 | f32 hard raw | f32 hard rescaled | wall-flux L2 | 6.17x | yes | 1.1e-05 |
 | f32 hard raw | f32 hard rescaled | total-heat error | 10.61x | yes | 1.1e-05 |
 
-With 10 vs 10 runs the smallest possible p is 1.1e-5. Several comparisons are made; read p as a rank statement.
+</details>
 
-### Classical second-order finite differences, direct sparse solve (results/baselines)
+## What the three problems say together
 
-| grid points | L2 | seconds |
-|---|---|---|
-| 400 | 2.28e-03 | 0.001 |
-| 2,500 | 3.43e-04 | 0.009 |
-| 10,000 | 8.39e-05 | 0.045 |
-| 40,000 | 2.08e-05 | 0.264 |
+| | 1D heat | Burgers shock | 2D Poisson |
+|---|---|---|---|
+| exact BC/IC enforcement | ~20x lower error | no detectable effect | ~340-550x lower error |
+| field rescaling | not tested | not tested | 7-12x lower error |
+| float64 | ~6-10x lower error (cap-limited) | ~1.6x (n = 3) | not tested |
+| classical solver | 10^4-10^5x faster for equal accuracy | ~10^3-10^4x faster | ~10^2x faster |
 
+The recipe effect is **problem-dependent**: the large gains appear where the constraint is easy to build exactly (homogeneous
+Dirichlet conditions on a rectangle) and the solution is smooth; they vanish for a shock. The consistent finding is that, for these
+forward problems, **PINNs trade a lot of compute for accuracy per collocation point, and classical solvers win on cost**. Where PINNs
+are expected to be competitive (inverse problems, irregular geometry, sparse noisy data) is not tested here.
 
+## Limitations
 
+- One network family (tanh MLP), fixed sizes, mostly float32; no learning-rate schedules, adaptive loss weighting, adaptive sampling
+  or Fourier features were explored. Soft-constraint weights were searched only coarsely (1, 10, 100, 1000).
+- Simple geometries (interval, rectangle) with homogeneous Dirichlet conditions, where exact enforcement is easy; solutions with
+  analytical or verified references. The 2D and heat solutions are smooth and low-frequency.
+- 3-10 runs per setting; small-sample statistics. Float64 results are limited by the 3,000-iteration L-BFGS cap and (for Experiment 1a)
+  an unseeded initializer. L-BFGS stopped early in all float32 runs; whether float64 or a different optimizer removes that limit is
+  untested beyond the float64 runs reported.
+- Experiments ran in different Kaggle sessions (DeepXDE 1.15.0 throughout). TensorFlow: heat 2.20.0 (45 runs); Burgers 2.20.0 (15 runs) and 2.21.0 (13 runs);
+  Poisson 2.21.0 (40 runs). The two Burgers batches therefore differ in TensorFlow version (see Experiment 2).
+- Timing comparisons mix GPU (four jobs sharing two GPUs) and CPU measurements.
 
-### Problem 2: 2D Poisson (steady conduction with a source), 10 runs per setting
+## Reproducing the results
 
-4x64 tanh network, 2,500 collocation points (soft adds 400 boundary points), float32, 20,000 Adam
-iterations then L-BFGS capped at 3,000; Kaggle 2xT4, TensorFlow 2.21.0, DeepXDE 1.15.0, all 40 runs in
-one session. "Raw" learns T (peak 0.051); "rescaled" learns 2*pi^2*T (peak 1). "Hard": u = x(1-x)y(1-y)N.
+**Environment.** Kaggle notebooks with 2x Tesla T4 for all PINN runs (versions above); local Python 3.11 (CPU) for the classical
+baselines and analysis. Install: `pip install -r requirements.txt`.
 
-**Findings.** Exact enforcement of the boundary condition lowered median field L2 by ~340x (raw) and
-~550x (rescaled); every hard run beat every soft run. Rescaling lowered median L2 by ~7x (soft) and
-~12x (hard). The best recipe (hard, rescaled; median L2 9.8e-7) is ~4,000x better than the baseline
-recipe (soft, raw; 3.9e-3). L-BFGS stopped before its cap in all 40 runs; in two of four settings, runs
-with more L-BFGS iterations had lower error (Spearman -0.94 and -0.85). Against a classical second-order
-finite-difference solver (direct solve), the best PINN is ~20x more accurate than a 40,000-point grid,
-but a classical solver needs seconds, the PINN ~7 GPU-minutes; the exact solution is a single sine mode,
-so a spectral method would be near-exact. Limitations: homogeneous Dirichlet conditions on a rectangle
-(an easy hard-constraint factor); smooth solution; one network size; float32 only.
+**Regenerate every table and figure from the raw per-run JSON (a few seconds, CPU):**
 
-![2D comparison](02_heat_2d/results/fig_2d_comparison_corrected.png)
-- Figures and summary files built on the old baselines were removed; baseline-dependent
-  figures were regenerated by `make_corrected_figures.py`.
+```bash
+python baselines/classical_baselines.py
+python analysis/summarize_heat1d.py
+python analysis/summarize_burgers.py
+python analysis/summarize_poisson2d.py
+python analysis/make_cost_accuracy_figure.py
+```
 
+**Run one PINN experiment locally (CPU, about half a minute for this small configuration):**
 
-Note: "For simple rectangular domains, FDM remains computationally faster. The PINN advantage becomes decisive in irregular geometries, inverse problems, and multi-physics settings where FDM requires complete remeshing. No  GPU was used in any of the code executions"
+```bash
+python experiments/03_poisson2d_recipe.py --device cpu --constraint hard --scale rescaled \
+    --depth 2 --width 32 --n-domain 800 --adam-iters 1500 --lbfgs-maxiter 150 --outdir results/local
+```
 
-## Corrections log
-- The first 2D results (single runs, soft boundary conditions, unscaled field) understated what a PINN
-  can reach on this problem: with exact boundary enforcement and a rescaled field the median error is
-  ~4,000x lower (Experiment 3). The earlier conclusion that finite differences are 28x more accurate
-  described only the baseline recipe.
+<details>
+<summary>Exact commands used for the GPU grids (Kaggle, run from the repository root)</summary>
 
+`experiments/run_grid.py` runs a grid of jobs as parallel subprocesses spread over GPUs; each job writes one JSON file.
 
+```bash
+# Experiment 1a (earlier script version: no seeded initializer, no --bc-weight option)
+python experiments/run_grid.py --script experiments/01_heat1d_recipe.py \
+  --grid precision=float32,float64 constraint=soft,hard --seeds 0 1 2 3 4 --gpus 0 1 --procs-per-gpu 2 \
+  --name-template "heat1d_{precision}_{constraint}_s{seed}" --outdir results/heat1d_recipe --extra --lbfgs-maxiter 3000
 
-#### Problem 3 — Burgers' Equation (Viscous Flow)
+# Experiment 1b
+python experiments/run_grid.py --script experiments/01_heat1d_recipe.py \
+  --grid precision=float32 constraint=soft bc-weight=1,10,100,1000 --seeds 0 1 2 3 4 --gpus 0 1 --procs-per-gpu 2 \
+  --name-template "heat1d_f32_soft_w{bc-weight}_s{seed}" --outdir results/heat1d_weights --extra --lbfgs-maxiter 3000
+python experiments/run_grid.py --script experiments/01_heat1d_recipe.py \
+  --grid precision=float32 constraint=hard --seeds 0 1 2 3 4 --gpus 0 1 --procs-per-gpu 2 \
+  --name-template "heat1d_f32_hard_s{seed}" --outdir results/heat1d_weights --extra --lbfgs-maxiter 3000
 
-| Metric | Spectral Reference | PINN | Notes |
-|--------|--------------------|------|-------|
-| L2 Relative Error | — (reference) | ⏳ | Raissi 2019 reports  3.93×10⁻⁴ |
-| L∞ Error | — (reference) | ⏳ | — |
-| Shock region error | — | ⏳ | Key challenge region |
+# Experiment 2 (Burgers): seeds 0-4, then seeds 5-9, then float64
+python experiments/run_grid.py --script experiments/02_burgers_recipe.py \
+  --grid constraint=soft bc-weight=1,100 --seeds 0 1 2 3 4 --gpus 0 1 --procs-per-gpu 2 \
+  --name-template "burgers_f32_soft_w{bc-weight}_s{seed}" --outdir results/burgers_recipe --extra --lbfgs-maxiter 3000
+python experiments/run_grid.py --script experiments/02_burgers_recipe.py \
+  --grid constraint=hard --seeds 0 1 2 3 4 --gpus 0 1 --procs-per-gpu 2 \
+  --name-template "burgers_f32_hard_s{seed}" --outdir results/burgers_recipe --extra --lbfgs-maxiter 3000
+python experiments/run_grid.py --script experiments/02_burgers_recipe.py \
+  --grid constraint=soft,hard bc-weight=1 --seeds 5 6 7 8 9 --gpus 0 1 --procs-per-gpu 2 --job-timeout-min 90 \
+  --name-template "burgers_f32_{constraint}_s{seed}" --outdir results/burgers_more_seeds --extra --lbfgs-maxiter 3000
+python experiments/run_grid.py --script experiments/02_burgers_recipe.py \
+  --grid constraint=hard precision=float64 --seeds 0 1 2 --gpus 0 1 --procs-per-gpu 2 --job-timeout-min 180 \
+  --name-template "burgers_f64_hard_s{seed}" --outdir results/burgers_float64 --extra --lbfgs-maxiter 3000
 
-**Note:** This project is actively in progress. Results will be updated
+# Experiment 3 (2D Poisson)
+python experiments/run_grid.py --script experiments/03_poisson2d_recipe.py \
+  --grid constraint=soft,hard scale=raw,rescaled --seeds 0 1 2 3 4 5 6 7 8 9 --gpus 0 1 --procs-per-gpu 2 --job-timeout-min 60 \
+  --name-template "poisson2d_f32_{constraint}_{scale}_s{seed}" --outdir results/poisson2d_recipe --extra --lbfgs-maxiter 3000
+```
 
-## Corrections log
-- An early 2D FDM baseline used an under-converged Gauss-Seidel iteration and
-  an early 1D comparison scored FDM at the final time only. Both were replaced by
-  `fdm_baselines_corrected.py` (direct sparse solve; whole-domain space-time metric).
----
+</details>
 
-### Architecture Study *(In Progress)*
+## Repository structure
 
-Which neural network configuration best solves physics-constrained PDEs?
-
-| Architecture | Activation | Parameters | L2 Error | Training Time |
-|-------------|------------|------------|----------|---------------|
-| [2, 20×3, 1] | tanh | ~1,300 | ⏳ | ⏳ |
-| [2, 64×4, 1] | tanh | ~16,500 | ⏳ | ⏳ |
-| [2, 64×4, 1] | sin (SIREN) | ~16,500 | ⏳ | ⏳ |
-| [2, 64×4, 1] | swish | ~16,500 | ⏳ | ⏳ |
-| [2, 64×6, 1] | tanh | ~24,700 | ⏳ | ⏳ |
-
-
-
-This result will be updated soon. 
-*Hypothesis: tanh and sin activations will outperform ReLU because
-PDE residual computation requires smooth, non-zero second derivatives.*
-
- **Note:** This project is actively in progress. Results will be updated
-> as each phase completes. Current status: FDM baseline complete ✓,
-> PINN training in progress.
-
-
+```
 .
-
----
-
-## Installation
-
-```bash
-# 1. Clone the repository
-git clone https://github.com/Mathewboat/Pinn-heat-fluid.git
-cd Pinn-heat-fluid
-
-# 2. Create and activate virtual environment
-python -m venv pinn_env
-
-# Windows
-pinn_env\Scripts\activate
-# Mac / Linux
-source pinn_env/bin/activate
-
-# 3. Install dependencies
-pip install -r requirements.txt
-
-# 4. Set DeepXDE backend
-# Windows (PowerShell)
-$env:DDE_BACKEND="tensorflow"
-# Mac / Linux
-export DDE_BACKEND=tensorflow
+├── README.md
+├── requirements.txt
+├── LICENSE
+├── experiments/      PINN experiments (one JSON per run) and the parallel grid runner (run_grid.py)
+├── baselines/        classical solvers (Crank-Nicolson, direct sparse solve, finite differences) + Cole-Hopf check
+├── analysis/         summarizers: raw JSON -> tables and figures
+├── results/
+│   ├── kaggle/       raw per-run JSON from the GPU runs and the speed benchmark
+│   ├── baselines/    classical_baselines.json
+│   ├── tables/       generated markdown tables
+│   └── figures/      generated figures
+├── 03_burgers/       burgers_shock.mat (reference data, Raissi et al. 2019)
+└── legacy/           early prototypes (superseded; kept for history)
 ```
 
-**requirements.txt:**
-```
-tensorflow>=2.15
-deepxde>=1.10
-numpy>=1.24
-scipy>=1.11
-matplotlib>=3.7
-scikit-learn>=1.3
-pandas>=2.0
-jupyter>=1.0
-imageio>=2.31
-tqdm>=4.65
-```
+## Corrections log
 
-**Python version:** 3.11 required (TensorFlow constraint)
+This project's first results contained mistakes that were found and corrected during the work. They are listed here because the
+corrections are part of the result.
 
----
-
-**Limitation:**
-
-**Reproducibility:**
-
-## Usage
-
-### Run the FDM Baseline
-
-```bash
-cd 01_heat_1d
-python heat1d_fdm_baseline.py
-```
-
-Outputs four figures to `01_heat_1d/results/` and prints error metrics
-and grid refinement table to terminal.
-
-### Run the PINN Solver *(in progress)*
-
-```bash
-cd 01_heat_1d
-python heat1d_pinn.py
-```
-
-### Reproduce All Results
-
-```bash
-cd 01_heat_1d
-python heat1d_fdm_baseline.py
-python heat1d_pinn.py
-python data_efficiency_study.py
-cd ../02_heat_2d
-python heat2d_pinn.py
-cd ..
-python fdm_baselines_corrected.py
-cd 03_burgers      # download burgers_shock.mat here first
-python burgers_pinn.py --config baseline --seed 42
-```
-
----
-
-## Engineering Applications
-
-The methods developed in this project have direct relevance to open problems
-in mechanical engineering research:
-
-**Thermal Management of Electronics**
-Modern processors dissipate 100+ W/cm². PINN-based solvers could enable
-real-time thermal field reconstruction from sparse thermocouple measurements
-— an inverse problem extension of this work.
-
-**Additive Manufacturing**
-Laser powder bed fusion involves rapid, localized heat input creating steep
-thermal gradients. Classical FEM solvers require millions of elements and
-hours of compute time. PINNs offer a path to faster thermal history prediction
-for microstructure control.(untested)
-
-**Turbomachinery**
-Burgers' equation is a canonical model for shock waves in compressible flow —
-directly relevant to blade passage flows in turbines and compressors. The
-shock-capturing capability studied in Problem 3 maps to these applications.
-
-**Digital Twins**
-PINNs can assimilate sparse sensor data while remaining consistent with
-governing physics — a key capability for physics-augmented digital twin
-frameworks in structural health monitoring and process control.
-
----
+1. **2D finite-difference baseline.** An early Gauss-Seidel baseline stopped on the size of the per-sweep update, leaving about 2%
+   iteration error, so a PINN looked 8.4x more accurate than finite differences. With a direct sparse solve (second-order
+   convergence verified) finite differences were about 28x more accurate than that early PINN. The earlier claim is retracted.
+2. **1D heat point-count claims** ("26,401x", "2,933x", "344x", "34x" fewer points). The baseline was stability-limited explicit
+   Euler, errors were compared at the final time only, and training-point counts omitted boundary/initial points. Against a
+   Crank-Nicolson baseline there is no point advantage (2.2e-4 with 1,681 space-time points in milliseconds). The claims and
+   the figures that showed them were removed.
+3. **Seeds.** DeepXDE's `set_random_seed` did not control weight initialization with TensorFlow 2 / Keras 3. Runs before
+   Experiment 1b (the early data-efficiency study, Experiment 1a, the early 2D runs) are independent random replicates, not
+   reproducible per seed. From Experiment 1b on, a seeded initializer is used; identical settings reproduce to the last digit on CPU
+   and on the GPU.
+4. **Burgers.** An early 5-run comparison suggested hard constraints reduced near-shock error 4.6x; the effect disappeared with 10 runs.
+   The two batches ran under different TensorFlow versions (disclosed above).
+5. **2D conclusions.** The early conclusion that PINNs are not competitive in 2D described only the soft-constraint, unscaled
+   recipe and is superseded by Experiment 3. A first cross-scale comparison used absolute L-infinity errors that are not comparable
+   between raw and rescaled fields; relative L-infinity is used throughout.
+6. **Numbers.** Early planning notes contained estimates and expected values. Every number in this README is generated from the
+   committed result files by the scripts in `analysis/` and `baselines/`.
 
 ## Roadmap
 
-- [x] Repository setup and documentation
-- [x] FDM baseline solver — 1D heat equation
-- [x] Grid refinement study and error analysis
-- [x] PINN solver — 1D heat equation (Days 9–13)
-- [x] PINN vs FDM data efficiency comparison
-- [x] PINN solver — 2D steady-state heat equation (Days 14–18)
-- [ ] PINN solver — Burgers' equation (Days 19–24)
-- [ ] Architecture and activation function study
-- [ ] Full results table and figures
-- [ ] Technical report (LaTeX, ASME format)
-- [ ] arXiv preprint submission
-
----
+Planned, not done: an inverse problem (recovering a diffusivity or viscosity from sparse noisy measurements) compared against a
+classical least-squares fit; irregular geometry; float64 and optimizer studies for the shock problem.
 
 ## References
 
-1. **Raissi, M., Perdikaris, P., & Karniadakis, G. E. (2019).**
-   Physics-informed neural networks: A deep learning framework for solving
-   forward and inverse problems involving nonlinear partial differential equations.
-   *Journal of Computational Physics*, 378, 686–707.
+1. Raissi, M., Perdikaris, P., & Karniadakis, G. E. (2019). Physics-informed neural networks: A deep learning framework for solving
+   forward and inverse problems involving nonlinear partial differential equations. *Journal of Computational Physics*, 378, 686-707.
    https://doi.org/10.1016/j.jcp.2018.10.045
-
-2. **Lu, L., Meng, X., Mao, Z., & Karniadakis, G. E. (2021).**
-   DeepXDE: A deep learning library for solving differential equations.
-   *SIAM Review*, 63(1), 208–228.
-   https://doi.org/10.1137/19M1274067
-
-3. **Cuomo, S., Di Cola, V. S., Giampaolo, F., Rozza, G., Raissi, M.,
-   & Piccialli, F. (2022).**
-   Scientific machine learning through physics-informed neural networks:
-   Where we are and what's next.
-   *Journal of Scientific Computing*, 92(3), 88.
-   https://arxiv.org/abs/2201.05624
-
-4. **Cai, S., Wang, Z., Wang, S., Perdikaris, P., & Karniadakis, G. E. (2021).**
-   Physics-informed neural networks for heat transfer problems.
-   *Journal of Heat Transfer*, 143(6).
-   https://arxiv.org/abs/2101.01630
-
-5. **Karniadakis, G. E., Kevrekidis, I. G., Lu, L., Perdikaris, P.,
-   Wang, S., & Yang, L. (2021).**
-   Physics-informed machine learning.
-   *Nature Reviews Physics*, 3(6), 422–440.
-   https://doi.org/10.1038/s42254-021-00314-5
-
-6. **Brunton, S. L., Koumoutsakos, B. R., & Sagaut, P. (2020).**
-   Machine learning for fluid mechanics.
-   *Annual Review of Fluid Mechanics*, 52, 477–508.
-   https://doi.org/10.1146/annurev-fluid-010719-060214
-
----
+2. Lu, L., Meng, X., Mao, Z., & Karniadakis, G. E. (2021). DeepXDE: A deep learning library for solving differential equations.
+   *SIAM Review*, 63(1), 208-228. https://doi.org/10.1137/19M1274067
+3. Karniadakis, G. E., Kevrekidis, I. G., Lu, L., Perdikaris, P., Wang, S., & Yang, L. (2021). Physics-informed machine learning.
+   *Nature Reviews Physics*, 3, 422-440. https://doi.org/10.1038/s42254-021-00314-5
+4. Cai, S., Wang, Z., Wang, S., Perdikaris, P., & Karniadakis, G. E. (2021). Physics-informed neural networks for heat transfer
+   problems. *Journal of Heat Transfer*, 143(6).
+5. Brunton, S. L., Noack, B. R., & Koumoutsakos, P. (2020). Machine learning for fluid mechanics. *Annual Review of Fluid Mechanics*,
+   52, 477-508.
+6. Hopf, E. (1950). The partial differential equation u_t + u u_x = mu u_xx. *Communications on Pure and Applied Mathematics*, 3,
+   201-230; Cole, J. D. (1951). On a quasi-linear parabolic equation occurring in aerodynamics. *Quarterly of Applied Mathematics*, 9,
+   225-236. (Cole-Hopf transformation used for the exact Burgers reference.)
+7. McGreivy, N., & Hakim, A. (2024). Weak baselines and reporting biases lead to overoptimism in machine learning for fluid-related
+   partial differential equations. *Nature Machine Intelligence*.
+8. Grossmann, T. G., Komorowska, U. J., Latz, J., & Schonlieb, C.-B. (2024). Can physics-informed neural networks beat the finite
+   element method? *IMA Journal of Applied Mathematics*.
 
 ## Author
 
-**Mathew Boateng Ahenkora**
-Prospective Graduate Applicant, Mechanical Engineering
-Undergraduate: Kwame Nkrumah University of Science and Technology (KNUST)
+**Mathew Ahenkora Boateng**, Prospective Graduate Applicant, Mechanical Engineering
+Kwame Nkrumah University of Science and Technology (KNUST)
 
-- 📧 mkwameboateng@gmail.com
-- 🔗 [linkedin.com/in/mathew-ahenkora-boateng-7222011b6](https://www.linkedin.com/in/mathew-ahenkora-boateng-7222011b6)
-- 🐙 [github.com/Mathewboat](https://github.com/Mathewboat)
+- Email: mkwameboateng@gmail.com
+- LinkedIn: https://www.linkedin.com/in/mathew-ahenkora-boateng-7222011b6
+- GitHub: https://github.com/Mathewboat
 
-*Applying for PhD programs in Mechanical Engineering (Fall 2027 intake),
-with research interests in computational mechanics, scientific machine learning,
-and physics-informed methods for thermal and fluid systems.*
-
----
+*Applying for PhD programs in Mechanical Engineering (Fall 2027 intake), with research interests in computational mechanics,
+scientific machine learning, and physics-informed methods for thermal and fluid systems.*
 
 ## Acknowledgements
 
-This project builds on the foundational PINN framework developed by
-Raissi, Perdikaris & Karniadakis (2019) and uses the DeepXDE library
-developed by Lu et al. (2021). Reference spectral data for the Burgers'
-equation is from the original PINN paper's supplementary repository.
+Built on DeepXDE (Lu et al., 2021) and on the Burgers reference data from the repository accompanying Raissi et al. (2019). GPU time
+from free Kaggle notebooks (2x Tesla T4).
 
----
+## License
 
-*Last updated: Novermber 15, 2026 · Status: In Progress*
+MIT, see [LICENSE](LICENSE).
