@@ -13,3 +13,4 @@ A laptop was used to run the forward problem but due to limited computing power 
 The code was ran on hard and soft boundaries on 32bit and sometimes 64 bits
 
 This project will be analysed for better understaning
+This will go through each and every part of the readme to explain what is happening in simple terms
