@@ -14,3 +14,5 @@ The code was ran on hard and soft boundaries on 32bit and sometimes 64 bits
 
 This project will be analysed for better understaning
 This will go through each and every part of the readme to explain what is happening in simple terms
+This projects seeks to analyse how machine learning can complement traditional methods. 
+Traditional methods may be faster and more computationally expensive. 
