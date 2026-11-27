@@ -16,3 +16,5 @@ This project will be analysed for better understaning
 This will go through each and every part of the readme to explain what is happening in simple terms
 This projects seeks to analyse how machine learning can complement traditional methods. 
 Traditional methods may be faster and more computationally expensive. 
+
+The idea of the PINN is to reduce the computational cost or the need for other requirement
